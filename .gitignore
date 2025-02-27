@@ -1,3 +1,7 @@
+manit_test/image_output/*
+puregym_test/image_output/*
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
