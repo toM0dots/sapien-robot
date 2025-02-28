@@ -17,14 +17,13 @@ import os
 
 
 def tensor_to_image(tensor):
-    tensor = np.array(tensor.squeeze(), dtype=np.uint8)
+    tensor = np.array(tensor.squeeze().cpu(), dtype=np.uint8)
     return Image.fromarray(tensor)
 
 # Setup the environment and robot
 env = gym.make("Terrain-env", 
                robot_uids="tw_robot", 
-               render_mode="rgb_array", 
-               human_render_camera_configs=dict(shader_pack="rt"),)
+               render_mode="rgb_array",)
 
 # Prepare snapshots/recording
 image_folder = './image_output'
@@ -51,7 +50,7 @@ for i in range(simulation_steps):
     print(f"Step: {i}, Obs shape: {obs.shape}, Reward shape {reward.shape}, Done shape {done.shape}")
 
     # Process and save snapshot
-    image = tensor_to_image(env.render_rgb_array())
+    image = tensor_to_image(env.render())
     image.save(f"image_output/cam{capture_i:05}.png")
 
     capture_i += 1
