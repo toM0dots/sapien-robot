@@ -24,8 +24,8 @@ DictControllerConfig = Dict[str, ControllerConfig]
 
 # Robot Parameters
 
-control_freq = 100.0
-timestep = 1 / control_freq
+# control_freq = 100.0
+# timestep = 1 / control_freq
 
 static_friction = 10.0
 dynamic_friction = 10.0
@@ -183,12 +183,7 @@ class TwRobot(BaseAgent):
 
     def _load_articulation(
         self, initial_pose: Optional[Union[sapien.Pose, Pose]] = None
-    ):
-
-        self.scene.set_timestep(timestep)
-
-        self._control_freq = control_freq
-        
+    ):        
         self.robot = self.create_twrobot(initial_pose)
         # self.robot.deivce = "cuda"
 
@@ -200,8 +195,8 @@ class TwRobot(BaseAgent):
         self,
     ) -> Dict[str, Union[ControllerConfig, DictControllerConfig]]:
         """Returns a dict of controller configs for this agent. By default this is a PDJointPos (delta and non delta) controller for all active joints."""
-        print([x.name for x in self.robot.active_joints if "extension_joint" in x.name])
-        print([x.name for x in self.robot.active_joints if "wheel_joint" in x.name])
+        # print([x.name for x in self.robot.active_joints if "extension_joint" in x.name])
+        # print([x.name for x in self.robot.active_joints if "wheel_joint" in x.name])
         '''
         lower: Union[None, float, Sequence[float]]
         upper: Union[None, float, Sequence[float]]
@@ -220,7 +215,7 @@ class TwRobot(BaseAgent):
         return dict(
             pd_joint_pos=dict(
                 body=PDJointPosControllerConfig(
-                    [x.name for x in self.robot.active_joints if "extension_joint" in x.name], # Arbittrary values
+                    [x.name for x in self.robot.active_joints if "extension_joint" in x.name],
                     lower=0,
                     upper=np.pi,
                     stiffness=1000,
@@ -233,9 +228,9 @@ class TwRobot(BaseAgent):
             ),
             pd_joint_delta_pos=dict(
                 body=PDJointPosControllerConfig(
-                    [x.name for x in self.robot.active_joints if "wheel_joint" in x.name], # Arbittrary values
-                    lower=None,
-                    upper=None,
+                    [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],
+                    lower=-np.inf, # None
+                    upper=np.inf, # None
                     stiffness=10,
                     damping=100,
                     friction=joint_friction,
