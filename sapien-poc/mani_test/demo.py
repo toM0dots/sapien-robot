@@ -17,7 +17,7 @@ import os
 
 
 def tensor_to_image(tensor):
-    tensor = np.array(tensor.squeeze(), dtype=np.uint8)
+    tensor = np.array(tensor.squeeze().cpu(), dtype=np.uint8)
     return Image.fromarray(tensor)
 
 def unify_extensions(actions, num_wheel_extensions, display=False):
@@ -75,7 +75,7 @@ for i in range(simulation_steps):
     print(f"Step: {i}, Obs shape: {obs.shape}, Reward shape {reward.shape}, Done shape {done.shape}")
 
     # Process and save snapshot
-    image = tensor_to_image(env.render_rgb_array())
+    image = tensor_to_image(env.render())
     image.save(f"image_output/cam{capture_i:05}.png")
 
     capture_i += 1
