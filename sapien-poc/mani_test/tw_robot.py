@@ -21,6 +21,7 @@ from mani_skill.agents.controllers.base_controller import (
     ControllerConfig,
 )
 DictControllerConfig = Dict[str, ControllerConfig]
+from mani_skill.utils.structs import Link
 
 # Robot Parameters
 
@@ -44,7 +45,7 @@ wheel_radius = 5e-2
 wheel_thickness = 1e-2
 wheel_material = [0.0, 0.4, 0.4]
 
-num_wheel_extensions = 3
+
 wheel_extension_radial_offset = wheel_radius / 1.2
 wheel_extension_angle_offset = np.deg2rad(20)
 wheel_extension_length = wheel_radius / 3
@@ -56,6 +57,7 @@ wheel_extension_material = [0.4, 0.0, 0.4]
 class TwRobot(BaseAgent):
     uid = "tw_robot"
 
+    num_wheel_extensions = 3
 
     def create_twrobot(self, initial_pos) -> sapien.physx.PhysxArticulation:
         
@@ -128,8 +130,13 @@ class TwRobot(BaseAgent):
         
         extension_half_size = [wheel_extension_width / 2, wheel_extension_length / 2, wheel_extension_thickness / 2]
         
+        # merged_extensions = []
+
         for name, fr, lr, quat in wheel_parameters:
-            for i in range(num_wheel_extensions):
+
+            # wheel_extensions = []
+
+            for i in range(self.num_wheel_extensions):
             
                 extension = robot_builder.create_link_builder(wheels[name])
                 extension.set_name(f"extension_{name}_{i}")
@@ -139,7 +146,7 @@ class TwRobot(BaseAgent):
                 extension.add_box_collision(half_size=extension_half_size)
                 extension.add_box_visual(half_size=extension_half_size, material=wheel_extension_material)
         
-                radial_angle = np.deg2rad(i/num_wheel_extensions*360)
+                radial_angle = np.deg2rad(i/self.num_wheel_extensions*360)
                 
                 y = wheel_extension_radial_offset * np.cos(radial_angle)
                 z = wheel_extension_radial_offset * np.sin(radial_angle)
@@ -155,7 +162,13 @@ class TwRobot(BaseAgent):
                     friction=joint_friction,
                     damping=joint_damping,
                 )
+
+                # wheel_extensions.append(extension)
+            
+            # merged_extensions.append(Link.merge(wheel_extensions, name="extensions_{name}"))
         
+        # print(merged_extensions)
+
         # 
         # Finalize the articulated robot
         # 
@@ -166,6 +179,8 @@ class TwRobot(BaseAgent):
         
         joints = {joint.get_name(): joint for joint in robot.get_active_joints()}
         
+        print(joints)
+
         joint_mode = 'force'
         
         for jname in joints:
@@ -211,32 +226,39 @@ class TwRobot(BaseAgent):
         drive_mode: Union[Sequence[DriveMode], DriveMode] = "force"
         controller_cls = PDJointPosController
         '''
-       
-        return dict(
-            pd_joint_pos=dict(
-                body=PDJointPosControllerConfig(
-                    [x.name for x in self.robot.active_joints if "extension_joint" in x.name],
-                    lower=0,
-                    upper=np.pi,
-                    stiffness=1000,
-                    damping=10,
-                    friction=joint_friction,
-                    normalize_action=False,
-                    use_target=True
-                ),
-                balance_passive_force=False, # Enable gravity
-            ),
-            pd_joint_delta_pos=dict(
-                body=PDJointPosControllerConfig(
-                    [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],
-                    lower=-np.inf, # None
-                    upper=np.inf, # None
-                    stiffness=10,
-                    damping=100,
-                    friction=joint_friction,
-                    normalize_action=True,
-                    use_delta=True,
-                ),
-                balance_passive_force=False, # Enable gravity
-            ),
+        wheel_pd_joint_delta_pos = PDJointPosControllerConfig(
+            [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],
+            lower=-1000,
+            upper=1000,
+            stiffness=10,
+            damping=100,
+            friction=joint_friction,
+            normalize_action=False,
+            use_delta=True,
         )
+
+        extension_pd_joint_pos = PDJointPosControllerConfig(
+            [x.name for x in self.robot.active_joints if "extension_joint" in x.name],
+            lower=0,
+            upper=np.pi,
+            stiffness=1000,
+            damping=10,
+            friction=joint_friction,
+            normalize_action=False,
+            use_target=True,
+        )       
+                
+        controller_configs = dict(
+            pd_joint_delta_pos=dict(
+                wheel_joint=wheel_pd_joint_delta_pos,
+                extension_joint=extension_pd_joint_pos,
+                balance_passive_force=False, # Enable gravity
+            ),
+            # pd_joint_pos=dict(
+            #   arm=arm_pd_joint_pos, gripper=gripper_pd_joint_pos,
+            #   balance_passive_force=False, # Enable gravity
+            # ),
+        )
+
+        # Make a deepcopy in case users modify any config
+        return deepcopy_dict(controller_configs)

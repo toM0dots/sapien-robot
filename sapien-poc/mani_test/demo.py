@@ -20,10 +20,34 @@ def tensor_to_image(tensor):
     tensor = np.array(tensor.squeeze(), dtype=np.uint8)
     return Image.fromarray(tensor)
 
+def unify_extensions(actions, num_wheel_extensions, display=False):
+    # First four actions are for the wheels, ignore
+    num_wheels = 4
+
+    for wheel_num in range(num_wheels):
+        first_extension_idx = num_wheels + wheel_num * num_wheel_extensions
+        uniform_action = actions[first_extension_idx] # Get the sample for the first extension
+
+        for extension_num in range(num_wheel_extensions):
+            actions[first_extension_idx + extension_num] = uniform_action # Set all extensions of that wheel to the first's sample
+
+    if display:
+        print("--------- Actions --------")
+        print(f"FLW Ext: {action[num_wheels+ 0*num_wheel_extensions]:.2f}\tFRW Ext: {action[num_wheels+ 1*num_wheel_extensions]:.2f}")
+        print(f"{action[0]:.2f}\t []-----[] {action[1]:.2f}\n" +
+                              "\t   |   |   \n" +
+                              "\t   |   |   \n" +
+              f"{action[2]:.2f}\t []-----[] {action[3]:.2f}")
+        print(f"RLW Ext: {action[num_wheels+ 2*num_wheel_extensions]:.2f}\tRRW Ext: {action[num_wheels+ 3*num_wheel_extensions]:.2f}")
+        print("---------------------------")
+    return actions
+
+
 # Setup the environment and robot
 env = gym.make("Terrain-env", 
                robot_uids="tw_robot", 
-               render_mode="rgb_array", 
+               render_mode="rgb_array", # When rendering the robot, the camera is facing the front of the robot (so it may appear reversed)
+               control_mode="pd_joint_delta_pos",
                human_render_camera_configs=dict(shader_pack="rt"),)
 
 env.print_sim_details()
@@ -35,22 +59,16 @@ if image_dir.exists():
     rmtree(image_dir)
 image_dir.mkdir()
 
-print("being all")
-print(env.action_space)
-print("-1")
-print(env.action_space.sample())
-print("-2")
-print(env.action_space.sample())
-print("end samples")
 
 # raise SystemExit
 # Simulation loop
 capture_i = 0
-simulation_steps = 100
+simulation_steps = 25
 obs, _ = env.reset(seed=0)
 for i in range(simulation_steps):
     
     action = env.action_space.sample()
+    action = unify_extensions(action, env.agent.num_wheel_extensions, display=True)
 
     obs, reward, terminated, truncated, info = env.step(action)
     done = terminated | truncated

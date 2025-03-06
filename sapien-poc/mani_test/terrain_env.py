@@ -29,26 +29,28 @@ class TerrainEnv(BaseEnv):
 
         terrain_name = "Terrain"
         terrain_vertical_offset = 0.05
-        terrain_length = 0.37
+        terrain_length = 1
         terrain_material = [0.9, 0.9, 0.9]
-        terrain_chunks = 5
+        terrain_chunks = 1
+
 
         builder = self.scene.create_actor_builder()
         builder.initial_pose = sapien.Pose(p=[0, 0, 0.02], q=[1, 0, 0, 0])
         
         builder.add_convex_collision_from_file(
-            filename=f"terrain/{terrain_name}.obj"
+            filename=f"terrain/{terrain_name}.obj",
         )
         builder.add_visual_from_file(
             filename=f"terrain/{terrain_name}.glb",
-            material=terrain_material
+            material=terrain_material,
         )
-        for i in range(0,terrain_chunks):
+
+        for i in range(terrain_chunks):
             terrain = builder.build_static(name=f"terrain_{i}") #Kinematic entities are not affected by forces
             terrain.set_pose(
                 Pose(
                     p=[i*terrain_length, 0, terrain_vertical_offset],
-                    q=euler2quat(np.deg2rad(90), 0, 0) #Terrain is by default on its side, rotate to correct orientation
+                    q=euler2quat(np.deg2rad(90), 0, np.deg2rad(90)) #Terrain is by default on its side, rotate to correct orientation
                 )
             )
  
