@@ -165,7 +165,6 @@ class TwRobot(BaseAgent):
         
         joints = {joint.get_name(): joint for joint in robot.get_active_joints()}
         
-
         joint_mode = 'force'
         
         for jname in joints:
@@ -185,7 +184,6 @@ class TwRobot(BaseAgent):
         self, initial_pose: Optional[Union[sapien.Pose, Pose]] = None
     ):        
         self.robot = self.create_twrobot(initial_pose)
-        # self.robot.deivce = "cuda"
 
         # Cache robot link names
         self.robot_link_names = [link.name for link in self.robot.get_links()]
