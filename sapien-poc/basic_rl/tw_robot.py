@@ -57,7 +57,7 @@ wheel_extension_material = [0.4, 0.0, 0.4]
 class TwRobot(BaseAgent):
     uid = "tw_robot"
 
-    num_wheel_extensions = 3 # TODO: Currently assumes 3 wheel extensions when copied
+    num_wheel_extensions = 3
 
     def create_twrobot(self, initial_pos) -> sapien.physx.PhysxArticulation:
         
@@ -105,6 +105,10 @@ class TwRobot(BaseAgent):
             wheel.add_cylinder_collision(radius=wheel_radius, half_length=wheel_half_thickness)
             wheel.add_cylinder_visual(radius=wheel_radius, half_length=wheel_half_thickness, material=wheel_material)
         
+            # wheel_half_size = [wheel_thickness/2, wheel_radius, wheel_radius]
+            # wheel.add_box_collision(half_size=wheel_half_size)
+            # wheel.add_box_visual(half_size=wheel_half_size, material=wheel_material)
+        
             wheel.set_joint_properties(
                 "revolute",
                 limits=[[-np.inf, np.inf]],
@@ -126,7 +130,13 @@ class TwRobot(BaseAgent):
         
         extension_half_size = [wheel_extension_width / 2, wheel_extension_length / 2, wheel_extension_thickness / 2]
         
+        
+
+
+
         for name, fr, lr, quat in wheel_parameters:
+
+            # wheel_extensions = []
 
             for i in range(self.num_wheel_extensions):
             
@@ -155,6 +165,12 @@ class TwRobot(BaseAgent):
                     damping=joint_damping,
                 )
 
+                # wheel_extensions.append(extension)
+            
+            # merged_extensions.append(Link.merge(wheel_extensions, name="extensions_{name}"))
+        
+        # print(merged_extensions)
+
         # 
         # Finalize the articulated robot
         # 
@@ -165,6 +181,7 @@ class TwRobot(BaseAgent):
         
         joints = {joint.get_name(): joint for joint in robot.get_active_joints()}
         
+        #print(joints)
 
         joint_mode = 'force'
         
@@ -192,52 +209,67 @@ class TwRobot(BaseAgent):
 
     @property
     def action_space(self) -> spaces.Space:
-        # Our control mode is pd_joint_delta_pos, never None
-
+        print("here in normal")
+        # print(list(self.controllers.items())[:8])
         if self._control_mode is None:
             return spaces.Dict(
                 {
                     uid: controller.action_space
-                    for uid, controller in self.controllers.items()
+                    for uid, controller in list(self.controllers.items())[:8]
                 }
             )
         else:
-            # When obtaining the action space, only keep the bottom 8 actions:
-            # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
             original_space = self.controller.action_space
-            return spaces.Box( 
+            new_action_space = spaces.Box(
                 low=original_space.low[:8],
                 high=original_space.high[:8],
                 dtype=original_space.dtype
             )
+            return new_action_space#self.controller.action_space#[:8]
         
     @property
     def single_action_space(self) -> spaces.Space:
-        # Our control mode is pd_joint_delta_pos, never None
-
+        print("here in single")
+        # print(list(self.controllers.items())[:8]
         if self._control_mode is None:
             return spaces.Dict(
                 {
                     uid: controller.single_action_space
-                    for uid, controller in self.controllers.items()
+                    for uid, controller in list(self.controllers.items())[:8]
                 }
             )
         else:
-            # When obtaining the action space, only keep the bottom 8 actions:
-            # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
+            #print(self.controller.single_action_space[:8])
             original_space = self.controller.single_action_space
-            return spaces.Box(
+            new_action_space = spaces.Box(
                 low=original_space.low[:8],
                 high=original_space.high[:8],
                 dtype=original_space.dtype
             )
+
+            return new_action_space#self.controller.single_action_space#[:8]
 
     @property
     def _controller_configs(
         self,
     ) -> Dict[str, Union[ControllerConfig, DictControllerConfig]]:
         """Returns a dict of controller configs for this agent. By default this is a PDJointPos (delta and non delta) controller for all active joints."""
-
+        # print([x.name for x in self.robot.active_joints if "extension_joint" in x.name])
+        # print([x.name for x in self.robot.active_joints if "wheel_joint" in x.name])
+        '''
+        lower: Union[None, float, Sequence[float]]
+        upper: Union[None, float, Sequence[float]]
+        stiffness: Union[float, Sequence[float]]
+        damping: Union[float, Sequence[float]]
+        force_limit: Union[float, Sequence[float]] = 1e10
+        friction: Union[float, Sequence[float]] = 0.0
+        use_delta: bool = False
+        use_target: bool = False
+        interpolate: bool = False
+        normalize_action: bool = True
+        drive_mode: Union[Sequence[DriveMode], DriveMode] = "force"
+        controller_cls = PDJointPosController
+        '''
         wheel_pd_joint_delta_pos = PDJointPosControllerConfig(
             [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],
             lower=-1000,
@@ -251,6 +283,8 @@ class TwRobot(BaseAgent):
 
         extension_pd_joint_pos = PDJointPosControllerConfig(
             [x.name for x in self.robot.active_joints if "extension_joint" in x.name],
+            # ["extension_joint_front_left_0", "extension_joint_front_right_0", 
+            #  "extension_joint_rear_left_0", "extension_joint_rear_right_0"],
             lower=0,
             upper=np.pi,
             stiffness=1000,
@@ -262,10 +296,15 @@ class TwRobot(BaseAgent):
 
         controller_configs = dict(
             pd_joint_delta_pos=dict(
-                wheel_joint=wheel_pd_joint_delta_pos, # 4 controllers for wheels
-                extension_joint=extension_pd_joint_pos, # 3 controllers per wheel
+                wheel_joint=wheel_pd_joint_delta_pos,
+                extension_joint=extension_pd_joint_pos,
+
                 balance_passive_force=False, # Enable gravity
             ),
+            # pd_joint_pos=dict(
+            #   arm=arm_pd_joint_pos, gripper=gripper_pd_joint_pos,
+            #   balance_passive_force=False, # Enable gravity
+            # ),
         )
 
         # Make a deepcopy in case users modify any config

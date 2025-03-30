@@ -227,8 +227,6 @@ for update in range(500001) if args.loadid is None else range(args.loadid + 1, 5
     # '''
 
 
-exit(0)
-
 
 env.print_sim_details()
 

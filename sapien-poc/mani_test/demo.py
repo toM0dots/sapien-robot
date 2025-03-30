@@ -15,32 +15,12 @@ import os
 
 
 
-
 def tensor_to_image(tensor):
     tensor = np.array(tensor.squeeze().cpu(), dtype=np.uint8)
     return Image.fromarray(tensor)
 
-def unify_extensions(actions, num_wheel_extensions, display=False):
-    # First four actions are for the wheels, ignore
-    num_wheels = 4
 
-    for wheel_num in range(num_wheels):
-        first_extension_idx = num_wheels + wheel_num * num_wheel_extensions
-        uniform_action = actions[first_extension_idx] # Get the sample for the first extension
 
-        for extension_num in range(num_wheel_extensions):
-            actions[first_extension_idx + extension_num] = uniform_action # Set all extensions of that wheel to the first's sample
-
-    if display:
-        print("--------- Actions --------")
-        print(f"FLW Ext: {action[num_wheels+ 0*num_wheel_extensions]:.2f}\tFRW Ext: {action[num_wheels+ 1*num_wheel_extensions]:.2f}")
-        print(f"{action[0]:.2f}\t []-----[] {action[1]:.2f}\n" +
-                              "\t   |   |   \n" +
-                              "\t   |   |   \n" +
-              f"{action[2]:.2f}\t []-----[] {action[3]:.2f}")
-        print(f"RLW Ext: {action[num_wheels+ 2*num_wheel_extensions]:.2f}\tRRW Ext: {action[num_wheels+ 3*num_wheel_extensions]:.2f}")
-        print("---------------------------")
-    return actions
 
 
 # Setup the environment and robot
@@ -48,9 +28,37 @@ env = gym.make("Terrain-env",
                robot_uids="tw_robot", 
                render_mode="rgb_array", # When rendering the robot, the camera is facing the front of the robot (so it may appear reversed)
                control_mode="pd_joint_delta_pos",
-               human_render_camera_configs=dict(shader_pack="rt"),)
+               human_render_camera_configs=dict(shader_pack="rt"),
+               )
 
-env.print_sim_details()
+'''
+Agent {'qpos': tensor([[-3.2177,  0.8464,  2.8541,  4.5857,  2.4664,  2.4662,  2.4660,  1.2347,
+          1.2283,  1.2214,  0.4652,  0.4650,  0.4646,  0.9906,  0.9943,  0.9988]]), 'qvel': tensor([[ 3.9682e+01,  5.9672e+01, -1.4642e+01, -5.8066e+01, -1.5829e-02,
+          1.2169e-02,  5.2137e-02, -1.6601e+00, -1.0892e+00, -4.3318e-01,
+         -3.0137e-01, -2.9174e-01, -2.7325e-01, -5.1538e-01, -9.5596e-01,
+         -1.5200e+00]]), 'controller': {'extension_joint': {'target_qpos': tensor([[2.4665, 2.4665, 2.4665, 1.2171, 1.2171, 1.2171, 0.4619, 0.4619, 0.4619,
+         0.9836, 0.9836, 0.9836]])}}}
+'''
+
+# env.print_sim_details()
+
+# from stable_baselines3 import A2C
+# model = A2C("MlpPolicy", env, verbose=1)
+# model.learn(total_timesteps=10_000)
+
+# vec_env = model.get_env()
+# obs = vec_env.reset()
+# for i in range(100):
+#     action, _state = model.predict(obs, deterministic=True)
+#     obs, reward, done, info = vec_env.step(action)
+#     # vec_env.render("rgb_array")
+#     # VecEnv resets automatically
+#     if done:
+#       obs = vec_env.reset()
+
+# vec_env.close()
+# env.close()
+# raise SystemExit("Done")
 
 # Prepare snapshots/recording
 image_folder = './image_output'
@@ -60,19 +68,43 @@ if image_dir.exists():
 image_dir.mkdir()
 
 
-# raise SystemExit
-# Simulation loop
+custom_actions = np.array([ [50.0, 50.0, 50.0, 50.0, 0.0, 0.0, 0.0, 0.0],
+                    [50.0, -50.0, 50.0, -50.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0],
+                    [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+                    [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+                    [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+                    [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+                    [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+                    [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
+                    [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
+                    [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+                    [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+                    [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
+                    [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
+                    [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0], ])
+
+
 capture_i = 0
-simulation_steps = 25
+simulation_steps = 300
 obs, _ = env.reset(seed=0)
 for i in range(simulation_steps):
     
-    action = env.action_space.sample()
-    action = unify_extensions(action, env.agent.num_wheel_extensions, display=True)
+    # action = env.action_space.sample()
+    action = custom_actions[int(i / 25)]
+    if(i == 25):
+        print("force reset")
+        env.reset()
 
     obs, reward, terminated, truncated, info = env.step(action)
+    # print(obs)
     done = terminated | truncated
+    print(f"Done: {done}, Term: {terminated}, Trunc: {truncated}")
     print(f"Step: {i}, Obs shape: {obs.shape}, Reward shape {reward.shape}, Done shape {done.shape}")
+
+    if(terminated):
+        print("Resetting sim...")
+        env.reset()
 
     # Process and save snapshot
     image = tensor_to_image(env.render())
@@ -98,16 +130,3 @@ for image in images:
     video.write(frame)
 cv2.destroyAllWindows()
 video.release()
-
-
-
-
-# ['extension_joint_front_left_0', 'extension_joint_front_left_1', 'extension_joint_front_left_2', 'extension_joint_front_right_0', 'extension_joint_front_right_1', 'extension_joint_front_right_2', 'extension_joint_rear_left_0', 'extension_joint_rear_left_1', 'extension_joint_rear_left_2', 'extension_joint_rear_right_0', 'extension_joint_rear_right_1', 'extension_joint_rear_right_2']
-# ['wheel_joint_front_left', 'wheel_joint_front_right', 'wheel_joint_rear_left', 'wheel_joint_rear_right']
-# ['extension_joint_front_left_0', 'extension_joint_front_left_1', 'extension_joint_front_left_2', 'extension_joint_front_right_0', 'extension_joint_front_right_1', 'extension_joint_front_right_2', 'extension_joint_rear_left_0', 'extension_joint_rear_left_1', 'extension_joint_rear_left_2', 'extension_joint_rear_right_0', 'extension_joint_rear_right_1', 'extension_joint_rear_right_2']
-# ['wheel_joint_front_left', 'wheel_joint_front_right', 'wheel_joint_rear_left', 'wheel_joint_rear_right']
-# Box(0.0, 3.1415927, (12,), float32)
-# [0.47070292 2.6439304  2.453756   2.9150815  1.4896942  2.898555
-#  2.8408165  2.9836972  2.309478   1.8424743  0.9898338  2.7874093 ]
-# [0.2609273  3.02554    2.1249518  2.459501   1.2093369  2.8597262
-#  1.0109758  1.6923621  0.76296705 1.824136   0.5914434  0.7782967 ]
