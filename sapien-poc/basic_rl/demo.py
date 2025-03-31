@@ -30,7 +30,7 @@ env = gym.make("Terrain-env",
 
 from stable_baselines3 import A2C
 model = A2C("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=1_000)
+model.learn(total_timesteps=30_000)
 
 
 # Prepare snapshots/recording
@@ -43,24 +43,27 @@ image_dir.mkdir()
 
 capture_i = 0
 
-# vec_env = model.get_env()
+vec_env = model.get_env()
 # obs = vec_env.reset()
 # obs = env.reset()
 obs, _ = env.reset()
 for i in range(100):
     action, _state = model.predict(obs, deterministic=True)
-    # obs, reward, done, info = vec_env.step(action)
-    # obs, reward, done, info = env.step(action)
+    print(action)
     obs, reward, terminated, truncated, info = env.step(action)
+    # obs, reward, done, info = vec_env.step(action)
+    # obs, reward, terminated, truncated = env.step(action)
     print(str(i)+": ",obs)
     # vec_env.render("rgb_array")
     image = tensor_to_image(env.render())
+    # image = tensor_to_image(vec_env.render())
     image.save(f"image_output/cam{capture_i:05}.png")
 
     capture_i += 1
     # VecEnv resets automatically
     if terminated: #done:
     #   obs = vec_env.reset()
+        print("Terminated")
         break
 
 # vec_env.close()

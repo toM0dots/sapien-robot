@@ -182,7 +182,9 @@ class TerrainEnv(BaseEnv):
     # Compute rewards
     #
     def compute_dense_reward(self, obs: Any, action: torch.Tensor, info: Dict):
-        return torch.tensor([obs[0][0]])
+        pose = self.agent.robot.get_pose().raw_pose.numpy()[0]
+        
+        return torch.tensor([pose[0].item()])
         # return torch.zeros(self.num_envs, device=self.device)
 
     def compute_normalized_dense_reward(

@@ -1,11 +1,12 @@
-from typing import Any, Dict, Union
 import sapien
 from sapien import Pose
-from transforms3d.euler import euler2quat
 import numpy as np
 import torch
-from mani_skill.sensors.camera import CameraConfig
+from typing import Any, Dict, Union
 
+from transforms3d.euler import euler2quat
+
+from mani_skill.sensors.camera import CameraConfig
 from mani_skill.utils import sapien_utils, common
 from mani_skill.envs.sapien_env import BaseEnv
 from mani_skill.utils.registration import register_env
@@ -14,28 +15,38 @@ from mani_skill.utils.registration import register_env
 class TerrainEnv(BaseEnv):
     SUPPORTED_ROBOTS = ["tw_robot"]
 
+    INITIAL_ROBOT_POSE_TUPLE = [0, 0, 0.3]
+    last_pose = np.array(INITIAL_ROBOT_POSE_TUPLE)
+
+    TARGET_POSE = [1.5, 0.25, 0]
+
     def __init__(self, *args, robot_uids="tw_robot", **kwargs):
         # robot_uids="fetch" is possible, or even multi-robot 
         # setups via robot_uids=("fetch", "panda")
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
+    @property
+    def _default_human_render_camera_configs(self):
+        pose = sapien_utils.look_at([0.6, 0.7, 0.6], [0.0, 0.0, 0.35])
+        return CameraConfig("render_camera", pose=pose, width=512, height=512, fov=1)
+    
     def _load_agent(self, options: dict):
-        super()._load_agent(options, sapien.Pose(p=[0, 0, 0.3]))
+        super()._load_agent(options, sapien.Pose(p=self.INITIAL_ROBOT_POSE_TUPLE))
 
     def _load_scene(self, options: dict):
         
         self.scene.set_ambient_light([0.5, 0.5, 0.5])
         self.scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5])
 
+
         terrain_name = "Terrain"
-        terrain_vertical_offset = 0.1
+        terrain_vertical_offset = 0.0
         terrain_length = 1
         terrain_material = [0.9, 0.9, 0.9]
         terrain_chunks = 1
 
-
         builder = self.scene.create_actor_builder()
-        builder.initial_pose = sapien.Pose(p=[0, 0, 0.02], q=[1, 0, 0, 0])
+        builder.initial_pose = sapien.Pose(p=[0,0,0], q=[1, 0, 0, 0])
         
         builder.add_convex_collision_from_file(
             filename=f"terrain/{terrain_name}.obj",
@@ -53,10 +64,37 @@ class TerrainEnv(BaseEnv):
                     q=euler2quat(np.deg2rad(90), 0, np.deg2rad(90)) #Terrain is by default on its side, rotate to correct orientation
                 )
             )
- 
+
         # strongly recommended to set initial poses for objects, even if you plan to modify them later
         # self.obj = builder.build(name="terrain")
 
+
+
+    def _initialize_episode(self, env_idx: torch.Tensor, options: dict):
+        print("Init episode...")
+        self.agent.robot.set_pose(sapien.Pose(p=self.INITIAL_ROBOT_POSE_TUPLE))
+
+
+    def evaluate(self):
+
+        success_threshold = 0.05
+        fall_threshold = -0.1
+
+        robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
+
+        # print(f"Pose: ({pose[0].item()},{pose[1].item()},{pose[2].item()})")
+
+        success = np.linalg.norm(self.TARGET_POSE-robot_pose) < success_threshold 
+        fail = robot_pose[2].item() < fall_threshold
+
+        return {
+            "success": torch.from_numpy(np.array([success])), # If robot has moved far enough forward, success. #torch.zeros(self.num_envs, device=self.device, dtype=bool),
+            "fail": torch.from_numpy(np.array([fail])) # If robot has fallen off, failed.    #torch.zeros(self.num_envs, device=self.device, dtype=bool),
+        }
+
+    #
+    # Override _step_action to have all extensions on a given wheel perform the same action
+    #
     def _step_action(
         self, action: Union[None, np.ndarray, torch.Tensor, Dict]
     ) -> Union[None, torch.Tensor]:
@@ -95,29 +133,24 @@ class TerrainEnv(BaseEnv):
 
         if set_action:
 
-
-
             # CHANGES
             # - Changed the action space to only contain 8 actions (1 per wheel and 1 per wheel's extension set)
             # - There are 16 controllers but only sampling from the 4 wheels, and 4 arbitrary extensions
             # - Duplicate for the wheel extensions so that they are in sync
-
             wheel_actions = action[:4]
             extension_actions = action[-4:]
-            repeated_last_four = torch.cat([extension_actions[i].repeat(3) for i in range(len(extension_actions))])
-            new_actions = torch.cat((wheel_actions, repeated_last_four))
+            repeated_extension_actions = torch.cat([
+                extension_actions[i].repeat(
+                    self.agent.num_wheel_extensions) for i in range(len(extension_actions))
+                ])
+            new_actions = torch.cat((wheel_actions, repeated_extension_actions))
 
             if self.num_envs == 1 and action_is_unbatched:
                 new_actions = common.batch(new_actions)
             
-            # print(new_actions)
-            
-
-            # CHANGES
-
-
             self.agent.set_action(new_actions)
-            
+            # END CHANGES
+
             if self._sim_device.is_cuda():
                 self.scene.px.gpu_apply_articulation_target_position()
                 self.scene.px.gpu_apply_articulation_target_velocity()
@@ -133,14 +166,52 @@ class TerrainEnv(BaseEnv):
             self.scene._gpu_fetch_all()
         return action
     
+    
+    #
+    # Get observations
+    #
+    def _get_obs_state_dict(self, info: Dict):
+        """Get (ground-truth) state-based observations."""
+        return dict(
+            agent=self._get_obs_agent(),
+            extra=self._get_obs_extra(info),
+        )
+
+    def _get_obs_extra(self, info: Dict):
+        return dict()
+    
+
+    #
+    # Compute rewards
+    #
+    def compute_dense_reward(self, obs: Any, action: torch.Tensor, info: Dict):
+        
+        robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
+
+        fallen = robot_pose[2] < 0
+
+        change_margin = 0.00005
+        minimal_change = abs(np.linalg.norm(self.last_pose-robot_pose)) < change_margin
+
+        improvement = np.linalg.norm(robot_pose-self.TARGET_POSE) < np.linalg.norm(self.last_pose-self.TARGET_POSE)
+        
+        reward = 0
+        if minimal_change:
+            pass
+        elif improvement:
+            reward = 1
+        elif (not improvement):
+            reward = -1
+        elif fallen:
+            reward = -1000
+            
+        self.last_pose = robot_pose
+        
+        return torch.tensor([reward])
+        # return torch.zeros(self.num_envs, device=self.device)
+
     def compute_normalized_dense_reward(
         self, obs: Any, action: torch.Tensor, info: Dict
     ):
-        return torch.tensor([1000*obs[0][0]]) # Maximize the x direction?
-    
-        # Not implemented yet but can't be NotImplementedError()
-    
-    @property
-    def _default_human_render_camera_configs(self):
-        pose = sapien_utils.look_at([0.6, 0.7, 0.6], [0.0, 0.0, 0.35])
-        return CameraConfig("render_camera", pose=pose, width=512, height=512, fov=1)
+        max_reward = 1.0
+        return self.compute_dense_reward(obs=obs, action=action, info=info) / max_reward
