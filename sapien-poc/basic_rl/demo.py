@@ -18,7 +18,7 @@ def tensor_to_image(tensor):
     return Image.fromarray(tensor)
 
 
-
+# gym.make to gym.make_vec?
 # Setup the environment and robot
 env = gym.make("Terrain-env", 
                robot_uids="tw_robot", 
@@ -30,7 +30,7 @@ env = gym.make("Terrain-env",
 
 from stable_baselines3 import A2C
 model = A2C("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=30_000)
+model.learn(total_timesteps=300)
 
 
 # Prepare snapshots/recording

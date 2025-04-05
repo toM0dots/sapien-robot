@@ -65,6 +65,13 @@ class TerrainEnv(BaseEnv):
                 )
             )
 
+        half_size = [1e-2, 1e-2, 1e-2]
+        builder = self.scene.create_actor_builder()
+        builder.add_box_collision(half_size=half_size)
+        builder.add_box_visual(half_size=half_size, material=[.1, .1, .1])
+        box = builder.build(name="block")
+        box.set_pose(Pose(p=self.INITIAL_ROBOT_POSE_TUPLE))
+
         # strongly recommended to set initial poses for objects, even if you plan to modify them later
         # self.obj = builder.build(name="terrain")
 
@@ -84,7 +91,7 @@ class TerrainEnv(BaseEnv):
 
         # print(f"Pose: ({pose[0].item()},{pose[1].item()},{pose[2].item()})")
 
-        success = np.linalg.norm(self.TARGET_POSE-robot_pose) < success_threshold 
+        success = abs(np.linalg.norm(robot_pose-self.TARGET_POSE)) < success_threshold 
         fail = robot_pose[2].item() < fall_threshold
 
         return {
@@ -188,20 +195,25 @@ class TerrainEnv(BaseEnv):
         
         robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
 
-        fallen = robot_pose[2] < 0
+        success_threshold = 0.05
+        fall_threshold = -0.1
 
         change_margin = 0.00005
-        minimal_change = abs(np.linalg.norm(self.last_pose-robot_pose)) < change_margin
 
+        success = abs(np.linalg.norm(robot_pose-self.TARGET_POSE)) < success_threshold 
+        fallen = robot_pose[2] < fall_threshold
+        minimal_change = abs(np.linalg.norm(self.last_pose-robot_pose)) < change_margin
         improvement = np.linalg.norm(robot_pose-self.TARGET_POSE) < np.linalg.norm(self.last_pose-self.TARGET_POSE)
         
-        reward = 0
+        reward = 10
         if minimal_change:
             pass
         elif improvement:
-            reward = 1
+            reward = 100
         elif (not improvement):
-            reward = -1
+            reward = -100
+        elif success:
+            reward = 1000
         elif fallen:
             reward = -1000
             
