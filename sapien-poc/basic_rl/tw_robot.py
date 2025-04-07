@@ -257,7 +257,8 @@ class TwRobot(BaseAgent):
             damping=10,
             friction=joint_friction,
             normalize_action=False,
-            use_target=True,
+            # use_target=True,
+            # use_delta=True,
         )
 
         controller_configs = dict(

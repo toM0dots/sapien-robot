@@ -30,7 +30,7 @@ env = gym.make("Terrain-env",
 
 from stable_baselines3 import A2C
 model = A2C("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=300)
+model.learn(total_timesteps=30_000)
 
 
 # Prepare snapshots/recording

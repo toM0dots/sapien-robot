@@ -18,7 +18,10 @@ class TerrainEnv(BaseEnv):
     INITIAL_ROBOT_POSE_TUPLE = [0, 0, 0.3]
     last_pose = np.array(INITIAL_ROBOT_POSE_TUPLE)
 
-    TARGET_POSE = [1.5, 0.25, 0]
+    TARGET_POSE = [1.5, 0.025, 0.1]
+
+    previous_action = torch.zeros(8)
+    max_wheel_delta = 0.5
 
     def __init__(self, *args, robot_uids="tw_robot", **kwargs):
         # robot_uids="fetch" is possible, or even multi-robot 
@@ -65,12 +68,13 @@ class TerrainEnv(BaseEnv):
                 )
             )
 
-        half_size = [1e-2, 1e-2, 1e-2]
-        builder = self.scene.create_actor_builder()
-        builder.add_box_collision(half_size=half_size)
-        builder.add_box_visual(half_size=half_size, material=[.1, .1, .1])
-        box = builder.build(name="block")
-        box.set_pose(Pose(p=self.INITIAL_ROBOT_POSE_TUPLE))
+        # half_size = [2e-2, 2e-2, 2e-2]
+        # builder = self.scene.create_actor_builder()
+        # builder.initial_pose = sapien.Pose(p=[0,0,0], q=[1, 0, 0, 0])
+        # builder.add_box_collision(half_size=half_size)
+        # builder.add_box_visual(half_size=half_size, material=[.2, .2, .2])
+        # box = builder.build(name="block")
+        # box.set_pose(Pose(p=self.INITIAL_ROBOT_POSE_TUPLE))
 
         # strongly recommended to set initial poses for objects, even if you plan to modify them later
         # self.obj = builder.build(name="terrain")
@@ -85,7 +89,7 @@ class TerrainEnv(BaseEnv):
     def evaluate(self):
 
         success_threshold = 0.05
-        fall_threshold = -0.1
+        fall_threshold = -1
 
         robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
 
@@ -146,11 +150,18 @@ class TerrainEnv(BaseEnv):
             # - Duplicate for the wheel extensions so that they are in sync
             wheel_actions = action[:4]
             extension_actions = action[-4:]
+            extension_actions = torch.clamp(
+                extension_actions,
+                self.previous_action[-4:] - self.max_wheel_delta,
+                self.previous_action[-4:] + self.max_wheel_delta
+            )
+
             repeated_extension_actions = torch.cat([
                 extension_actions[i].repeat(
                     self.agent.num_wheel_extensions) for i in range(len(extension_actions))
                 ])
             new_actions = torch.cat((wheel_actions, repeated_extension_actions))
+            self.previous_action = new_actions
 
             if self.num_envs == 1 and action_is_unbatched:
                 new_actions = common.batch(new_actions)
@@ -195,7 +206,7 @@ class TerrainEnv(BaseEnv):
         
         robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
 
-        success_threshold = 0.05
+        success_threshold = 0.1
         fall_threshold = -0.1
 
         change_margin = 0.00005
@@ -209,9 +220,9 @@ class TerrainEnv(BaseEnv):
         if minimal_change:
             pass
         elif improvement:
-            reward = 100
+            reward = 300
         elif (not improvement):
-            reward = -100
+            reward = -300
         elif success:
             reward = 1000
         elif fallen:
@@ -225,5 +236,5 @@ class TerrainEnv(BaseEnv):
     def compute_normalized_dense_reward(
         self, obs: Any, action: torch.Tensor, info: Dict
     ):
-        max_reward = 1.0
+        max_reward = 1000.0
         return self.compute_dense_reward(obs=obs, action=action, info=info) / max_reward
