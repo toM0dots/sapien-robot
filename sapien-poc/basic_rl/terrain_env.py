@@ -15,10 +15,10 @@ from mani_skill.utils.registration import register_env
 class TerrainEnv(BaseEnv):
     SUPPORTED_ROBOTS = ["tw_robot"]
 
-    INITIAL_ROBOT_POSE_TUPLE = [0, 0, 0.3]
+    INITIAL_ROBOT_POSE_TUPLE = [0, 0, 0.1]
     last_pose = np.array(INITIAL_ROBOT_POSE_TUPLE)
 
-    TARGET_POSE = [1.5, 0.025, 0.1]
+    TARGET_POSE = [3e-1, 2e-1, 0]
 
     previous_action = torch.zeros(8)
     max_wheel_delta = 0.5
@@ -68,16 +68,16 @@ class TerrainEnv(BaseEnv):
                 )
             )
 
-        # half_size = [2e-2, 2e-2, 2e-2]
-        # builder = self.scene.create_actor_builder()
-        # builder.initial_pose = sapien.Pose(p=[0,0,0], q=[1, 0, 0, 0])
-        # builder.add_box_collision(half_size=half_size)
-        # builder.add_box_visual(half_size=half_size, material=[.2, .2, .2])
-        # box = builder.build(name="block")
-        # box.set_pose(Pose(p=self.INITIAL_ROBOT_POSE_TUPLE))
 
-        # strongly recommended to set initial poses for objects, even if you plan to modify them later
-        # self.obj = builder.build(name="terrain")
+        # TEMPORARY FOR DEBUG
+        half_size = [2e-2, 2e-2, 2e-2]
+        builder = self.scene.create_actor_builder()
+        builder.initial_pose = sapien.Pose(p=self.TARGET_POSE, q=[1, 0, 0, 0])
+        builder.add_box_collision(half_size=half_size)
+        builder.add_box_visual(half_size=half_size, material=[.2, .2, .2])
+        box = builder.build_static(name="block")
+
+
 
 
 
@@ -88,8 +88,8 @@ class TerrainEnv(BaseEnv):
 
     def evaluate(self):
 
-        success_threshold = 0.05
-        fall_threshold = -1
+        success_threshold = 0.03
+        fall_threshold = -0.1
 
         robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
 
@@ -150,11 +150,6 @@ class TerrainEnv(BaseEnv):
             # - Duplicate for the wheel extensions so that they are in sync
             wheel_actions = action[:4]
             extension_actions = action[-4:]
-            extension_actions = torch.clamp(
-                extension_actions,
-                self.previous_action[-4:] - self.max_wheel_delta,
-                self.previous_action[-4:] + self.max_wheel_delta
-            )
 
             repeated_extension_actions = torch.cat([
                 extension_actions[i].repeat(
@@ -190,6 +185,7 @@ class TerrainEnv(BaseEnv):
     #
     def _get_obs_state_dict(self, info: Dict):
         """Get (ground-truth) state-based observations."""
+        # print(self._get_obs_agent())
         return dict(
             agent=self._get_obs_agent(),
             extra=self._get_obs_extra(info),
@@ -206,8 +202,8 @@ class TerrainEnv(BaseEnv):
         
         robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
 
-        success_threshold = 0.1
-        fall_threshold = -0.1
+        success_threshold = 0.03
+        fall_threshold = -0.01
 
         change_margin = 0.00005
 

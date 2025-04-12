@@ -25,6 +25,7 @@ env = gym.make("Terrain-env",
                render_mode="rgb_array", # When rendering the robot, the camera is facing the front of the robot (so it may appear reversed)
                control_mode="pd_joint_delta_pos",
                human_render_camera_configs=dict(shader_pack="rt"),
+            #    options={"target"=True},
                )
 
 
@@ -43,13 +44,35 @@ image_dir.mkdir()
 
 capture_i = 0
 
+# custom_actions = np.array([ [50.0, 50.0, 50.0, 50.0, 0.0, 0.0, 0.0, 0.0],
+#                     # [50.0, -50.0, 50.0, -50.0, 0.0, 0.0, 0.0, 0.0],
+#                     [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0],
+#                     [0.0, 0.0, 0.0, 0.0, 3.0, 2.0, 1.0, 0.0],
+#                     [20.0, 80.0, 50.0, 100.0, 0.0, 1.0, 2.0, 3.0],
+#                     [75.0, 75.0, 75.0, 75.0, 0.0, 1.0, 2.0, 3.0],
+#                     [70.0, 80.0, 90.0, 90.0, 0.0, 1.0, 2.0, 3.0],
+#                     [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+#                     [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+#                     [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
+#                     [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
+#                     [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+#                     [50.0, 50.0, 50.0, 50.0, 0.0, 1.0, 2.0, 3.0],
+#                     [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
+#                     [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
+#                     [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0], ])
+
 vec_env = model.get_env()
 # obs = vec_env.reset()
 # obs = env.reset()
 obs, _ = env.reset()
-for i in range(100):
+for i in range(120):
     action, _state = model.predict(obs, deterministic=True)
-    print(action)
+    # action = custom_actions[int(i / 25)]
+    # if(i == 25 or i == 75):
+    #     print("force reset")
+    #     env.reset()
+    
+    # print(str(i)+": ",action)
     obs, reward, terminated, truncated, info = env.step(action)
     # obs, reward, done, info = vec_env.step(action)
     # obs, reward, terminated, truncated = env.step(action)
