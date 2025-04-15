@@ -24,8 +24,6 @@ class TerrainEnv(BaseEnv):
     max_wheel_delta = 0.5
 
     def __init__(self, *args, robot_uids="tw_robot", **kwargs):
-        # robot_uids="fetch" is possible, or even multi-robot 
-        # setups via robot_uids=("fetch", "panda")
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
     @property

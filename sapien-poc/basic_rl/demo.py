@@ -2,21 +2,13 @@
 import gymnasium as gym
 import numpy as np
 
-# Robot and Env
+import sys
+import os
+# Add parent directory to import robot and terrain
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import tw_robot
 import terrain_env
-
-# Image/recording processing
-from PIL import Image
-from shutil import rmtree
-from pathlib import Path
-import cv2
-import os
-
-def tensor_to_image(tensor):
-    tensor = np.array(tensor.squeeze().cpu(), dtype=np.uint8)
-    return Image.fromarray(tensor)
-
+from robot_recorder import RobotRecorder
 
 # gym.make to gym.make_vec?
 # Setup the environment and robot
@@ -25,7 +17,6 @@ env = gym.make("Terrain-env",
                render_mode="rgb_array", # When rendering the robot, the camera is facing the front of the robot (so it may appear reversed)
                control_mode="pd_joint_delta_pos",
                human_render_camera_configs=dict(shader_pack="rt"),
-            #    options={"target"=True},
                )
 
 
@@ -35,11 +26,7 @@ model.learn(total_timesteps=30_000)
 
 
 # Prepare snapshots/recording
-image_folder = './image_output'
-image_dir = Path(image_folder)
-if image_dir.exists():
-    rmtree(image_dir)
-image_dir.mkdir()
+recorder = RobotRecorder()
 
 
 capture_i = 0
@@ -62,8 +49,6 @@ capture_i = 0
 #                     [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0], ])
 
 vec_env = model.get_env()
-# obs = vec_env.reset()
-# obs = env.reset()
 obs, _ = env.reset()
 for i in range(120):
     action, _state = model.predict(obs, deterministic=True)
@@ -78,11 +63,9 @@ for i in range(120):
     # obs, reward, terminated, truncated = env.step(action)
     print(str(i)+": ",obs)
     # vec_env.render("rgb_array")
-    image = tensor_to_image(env.render())
-    # image = tensor_to_image(vec_env.render())
-    image.save(f"image_output/cam{capture_i:05}.png")
-
-    capture_i += 1
+    
+    recorder.capture_image(env.render())
+    
     # VecEnv resets automatically
     if terminated: #done:
     #   obs = vec_env.reset()
@@ -92,20 +75,7 @@ for i in range(120):
 # vec_env.close()
 env.close()
 
-capture_fps = 25
-video_name = 'output_video.mp4'
-
-images = [img for img in os.listdir(image_folder) if img.endswith('.png')]
-images.sort() # Images get loaded out of order, need to organize them by name
-frame = cv2.imread(os.path.join(image_folder, images[0]))
-height, width, layers = frame.shape
-video = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), capture_fps, (width, height))
-for image in images:
-    img_path = os.path.join(image_folder, image)
-    frame = cv2.imread(img_path)
-    video.write(frame)
-cv2.destroyAllWindows()
-video.release()
+recorder.create_video("rl_output.mp4")
 
 
 raise SystemExit("Done")
