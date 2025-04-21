@@ -22,8 +22,8 @@ env = gym.make("Terrain-env",
 
 from stable_baselines3 import A2C
 model = A2C("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=30_000)
-
+model.learn(total_timesteps=40_000)
+# model.learn(total_timesteps=3)
 
 # Prepare snapshots/recording
 recorder = RobotRecorder()
@@ -50,18 +50,19 @@ capture_i = 0
 
 vec_env = model.get_env()
 obs, _ = env.reset()
-for i in range(120):
+for i in range(300):
     action, _state = model.predict(obs, deterministic=True)
     # action = custom_actions[int(i / 25)]
     # if(i == 25 or i == 75):
     #     print("force reset")
     #     env.reset()
+
     
     # print(str(i)+": ",action)
     obs, reward, terminated, truncated, info = env.step(action)
     # obs, reward, done, info = vec_env.step(action)
     # obs, reward, terminated, truncated = env.step(action)
-    print(str(i)+": ",obs)
+    print(str(i)+": ",action,"\n",obs)
     # vec_env.render("rgb_array")
     
     recorder.capture_image(env.render())

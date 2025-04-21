@@ -18,7 +18,8 @@ class TerrainEnv(BaseEnv):
     INITIAL_ROBOT_POSE_TUPLE = [0, 0, 0.1]
     last_pose = np.array(INITIAL_ROBOT_POSE_TUPLE)
 
-    TARGET_POSE = [3e-1, 2e-1, 0]
+    TARGET_POSE = [4.5e-1, 0, 2e-2]
+    TARGET_VELOCITY = 1
 
     previous_action = torch.zeros(8)
     max_wheel_delta = 0.5
@@ -36,10 +37,36 @@ class TerrainEnv(BaseEnv):
 
     def _load_scene(self, options: dict):
         
+
+
         self.scene.set_ambient_light([0.5, 0.5, 0.5])
         self.scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5])
 
+        builder = self.scene.create_actor_builder()
+        builder.initial_pose = sapien.Pose(p=[0,0,0], q=[1, 0, 0, 0])
 
+        half_size = [6e-1, 2e-1, 1e-2]
+        builder = self.scene.create_actor_builder()
+        builder.initial_pose = sapien.Pose(p=[0,0,0], q=[1, 0, 0, 0])
+        builder.add_box_collision(half_size=half_size)
+        builder.add_box_visual(half_size=half_size, material=[.2, .2, .2])
+        box = builder.build_static(name="floor")
+
+        half_size = [3e-2, 3e-1, 2e-2]
+        builder = self.scene.create_actor_builder()
+        builder.initial_pose = sapien.Pose(p=[2.5e-1,0,1e-2], q=[1, 0, 0, 0])
+        builder.add_box_collision(half_size=half_size)
+        builder.add_box_visual(half_size=half_size, material=[.4, .2, .4])
+        box = builder.build_static(name="wall")
+
+        half_size = [1e-2, 1e-2, 1e-2]
+        builder = self.scene.create_actor_builder()
+        builder.initial_pose = sapien.Pose(p=self.TARGET_POSE, q=[1, 0, 0, 0])
+        builder.add_box_collision(half_size=half_size)
+        builder.add_box_visual(half_size=half_size, material=[.9, .1, .1])
+        box = builder.build_static(name="goal")
+
+        return
         terrain_name = "Terrain"
         terrain_vertical_offset = 0.0
         terrain_length = 1
@@ -206,6 +233,10 @@ class TerrainEnv(BaseEnv):
         change_margin = 0.00005
 
         success = abs(np.linalg.norm(robot_pose-self.TARGET_POSE)) < success_threshold 
+        
+        velocity_diff = abs(self.TARGET_VELOCITY - abs(np.linalg.norm(robot_pose-self.TARGET_POSE)))
+        print(f"Velocity: {abs(np.linalg.norm(robot_pose-self.TARGET_POSE))}, Diff: {velocity_diff}")
+        
         fallen = robot_pose[2] < fall_threshold
         minimal_change = abs(np.linalg.norm(self.last_pose-robot_pose)) < change_margin
         improvement = np.linalg.norm(robot_pose-self.TARGET_POSE) < np.linalg.norm(self.last_pose-self.TARGET_POSE)
@@ -214,7 +245,7 @@ class TerrainEnv(BaseEnv):
         if minimal_change:
             pass
         elif improvement:
-            reward = 300
+            reward = 200 + 300 * (1/velocity_diff)
         elif (not improvement):
             reward = -300
         elif success:
