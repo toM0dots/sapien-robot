@@ -17,9 +17,14 @@ class TerrainEnv(BaseEnv):
 
     INITIAL_ROBOT_POSE_TUPLE = [0, 0, 0.1]
     last_pose = np.array(INITIAL_ROBOT_POSE_TUPLE)
+    last_velocity = np.array([0.0,0.0,0.0])
 
-    TARGET_POSE = [4.5e-1, 0, 2e-2]
-    TARGET_VELOCITY = 1
+    TARGET_DISTANCE = 4.5e-1
+    TARGET_VELOCITY = 3e-1 # in/s?
+
+    FALL_THRESHOLD = -0.1
+    CHANGE_MARGIN = 1e-5
+    
 
     previous_action = torch.zeros(8)
     max_wheel_delta = 0.5
@@ -37,8 +42,6 @@ class TerrainEnv(BaseEnv):
 
     def _load_scene(self, options: dict):
         
-
-
         self.scene.set_ambient_light([0.5, 0.5, 0.5])
         self.scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5])
 
@@ -52,19 +55,19 @@ class TerrainEnv(BaseEnv):
         builder.add_box_visual(half_size=half_size, material=[.2, .2, .2])
         box = builder.build_static(name="floor")
 
-        half_size = [3e-2, 3e-1, 2e-2]
-        builder = self.scene.create_actor_builder()
-        builder.initial_pose = sapien.Pose(p=[2.5e-1,0,1e-2], q=[1, 0, 0, 0])
-        builder.add_box_collision(half_size=half_size)
-        builder.add_box_visual(half_size=half_size, material=[.4, .2, .4])
-        box = builder.build_static(name="wall")
+        # half_size = [3e-2, 3e-1, 2e-2]
+        # builder = self.scene.create_actor_builder()
+        # builder.initial_pose = sapien.Pose(p=[2.5e-1,0,1e-2], q=[1, 0, 0, 0])
+        # builder.add_box_collision(half_size=half_size)
+        # builder.add_box_visual(half_size=half_size, material=[.4, .2, .4])
+        # box = builder.build_static(name="wall")
 
-        half_size = [1e-2, 1e-2, 1e-2]
-        builder = self.scene.create_actor_builder()
-        builder.initial_pose = sapien.Pose(p=self.TARGET_POSE, q=[1, 0, 0, 0])
-        builder.add_box_collision(half_size=half_size)
-        builder.add_box_visual(half_size=half_size, material=[.9, .1, .1])
-        box = builder.build_static(name="goal")
+        # half_size = [1e-2, 1e-2, 1e-2]
+        # builder = self.scene.create_actor_builder()
+        # builder.initial_pose = sapien.Pose(p=self.TARGET_POSE, q=[1, 0, 0, 0])
+        # builder.add_box_collision(half_size=half_size)
+        # builder.add_box_visual(half_size=half_size, material=[.9, .1, .1])
+        # box = builder.build_static(name="goal")
 
         return
         terrain_name = "Terrain"
@@ -107,21 +110,19 @@ class TerrainEnv(BaseEnv):
 
 
     def _initialize_episode(self, env_idx: torch.Tensor, options: dict):
-        print("Init episode...")
         self.agent.robot.set_pose(sapien.Pose(p=self.INITIAL_ROBOT_POSE_TUPLE))
 
 
     def evaluate(self):
 
-        success_threshold = 0.03
         fall_threshold = -0.1
 
         robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
 
         # print(f"Pose: ({pose[0].item()},{pose[1].item()},{pose[2].item()})")
 
-        success = abs(np.linalg.norm(robot_pose-self.TARGET_POSE)) < success_threshold 
-        fail = robot_pose[2].item() < fall_threshold
+        success = robot_pose[0].item() > self.TARGET_DISTANCE 
+        fail = robot_pose[2].item() < self.FALL_THRESHOLD
 
         return {
             "success": torch.from_numpy(np.array([success])), # If robot has moved far enough forward, success. #torch.zeros(self.num_envs, device=self.device, dtype=bool),
@@ -210,14 +211,23 @@ class TerrainEnv(BaseEnv):
     #
     def _get_obs_state_dict(self, info: Dict):
         """Get (ground-truth) state-based observations."""
-        # print(self._get_obs_agent())
         return dict(
             agent=self._get_obs_agent(),
             extra=self._get_obs_extra(info),
         )
 
     def _get_obs_extra(self, info: Dict):
-        return dict()
+        pose = self.agent.robot.get_qpos().numpy()[0]
+        angular_velocity = self.agent.robot.root_angular_velocity.numpy()[0]
+        linear_acceleration = (
+            self.last_velocity - self.agent.robot.root_linear_velocity.numpy()[0]
+        ) * self._control_freq
+
+        return dict(
+            qpos=torch.tensor(pose).unsqueeze(0),             
+            angular_vel=torch.tensor(angular_velocity).unsqueeze(0),  
+            linear_accel=torch.tensor(linear_acceleration).unsqueeze(0), 
+        )
     
 
     #
@@ -226,35 +236,78 @@ class TerrainEnv(BaseEnv):
     def compute_dense_reward(self, obs: Any, action: torch.Tensor, info: Dict):
         
         robot_pose = self.agent.robot.get_pose().raw_pose.numpy()[0][:3]
+        linear_vel = self.agent.robot.root_linear_velocity.numpy()[0]
+        angualr_vel = self.agent.robot.root_angular_velocity.numpy()[0]
+        obs_arr = obs.numpy()[0]
+        net_extension_angles = obs_arr[4] + obs_arr[7] + obs_arr[10] + obs_arr[13]
 
-        success_threshold = 0.03
-        fall_threshold = -0.01
+        minimal_change = abs(self.last_pose[0].item()-robot_pose[0].item()) < self.CHANGE_MARGIN
+        success = robot_pose[0].item() > self.TARGET_DISTANCE
+        fallen = robot_pose[2].item() < self.FALL_THRESHOLD
 
-        change_margin = 0.00005
+        velocity_x = linear_vel[0]
+        velocity_x_diff = abs(linear_vel[0] - self.TARGET_VELOCITY)
 
-        success = abs(np.linalg.norm(robot_pose-self.TARGET_POSE)) < success_threshold 
-        
-        velocity_diff = abs(self.TARGET_VELOCITY - abs(np.linalg.norm(robot_pose-self.TARGET_POSE)))
-        print(f"Velocity: {abs(np.linalg.norm(robot_pose-self.TARGET_POSE))}, Diff: {velocity_diff}")
-        
-        fallen = robot_pose[2] < fall_threshold
-        minimal_change = abs(np.linalg.norm(self.last_pose-robot_pose)) < change_margin
-        improvement = np.linalg.norm(robot_pose-self.TARGET_POSE) < np.linalg.norm(self.last_pose-self.TARGET_POSE)
-        
-        reward = 10
+        # Rewards
+        rew_survival = 50
+
+        scale_rew_vel = 150
+        rew_velocity = min(800, scale_rew_vel/(velocity_x_diff))
+
+        # Penalties
+        # scale_pen_ext = 0
+        # pen_extensions = net_extension_angles * scale_pen_ext
+
+        reward = rew_survival + rew_velocity # - pen_extensions
+
         if minimal_change:
-            pass
-        elif improvement:
-            reward = 200 + 300 * (1/velocity_diff)
-        elif (not improvement):
-            reward = -300
+            reward = rew_survival
+        elif success:
+            reward = 1000
+        elif fallen:
+            reward = -1000
+
+
+        self.last_pose = robot_pose
+        self.last_velocity = linear_vel
+
+        print(f"Reward: {reward}")
+
+        return torch.tensor([reward]) 
+
+        
+        
+        
+        
+        print(f"X lin vel: {linear_vel[0]}, X diff: {velocity_x_diff}, ")
+
+        ext_penalty_scale = 10
+        extension_penalty = 0 # ext_penalty_scale * -net_extension_angles 
+        
+        vel_max_reward = 600
+        vel_reward_ease = 200
+        # target_speed_reward = min(vel_max_reward, vel_reward_ease/(max(abs(velocity_x_diff), 0.00001)))
+
+        target_speed_reward = 50 * linear_vel[0]
+
+        survival_reward = 5 
+        reward = survival_reward + target_speed_reward + extension_penalty
+        
+        if minimal_change:
+            reward = 0
         elif success:
             reward = 1000
         elif fallen:
             reward = -1000
             
+        print(f"Pose: {robot_pose}, Lin vel: {linear_vel}, Success: {success}")
+        print(f"Rew: {reward}, Vel Rew: {target_speed_reward} Ext Pen: {extension_penalty}")
+
+
         self.last_pose = robot_pose
-        
+        self.last_velocity = linear_vel
+        # print("REW",reward)
+
         return torch.tensor([reward])
         # return torch.zeros(self.num_envs, device=self.device)
 
