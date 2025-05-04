@@ -10,7 +10,7 @@ from mani_skill.sensors.camera import CameraConfig
 from mani_skill.utils import sapien_utils, common
 from mani_skill.envs.sapien_env import BaseEnv
 from mani_skill.utils.registration import register_env
-
+from mani_skill.envs.utils import randomization, rewards
 @register_env("Terrain-env", max_episode_steps=50)
 class TerrainEnv(BaseEnv):
     SUPPORTED_ROBOTS = ["tw_robot"]
@@ -20,7 +20,7 @@ class TerrainEnv(BaseEnv):
     last_velocity = np.array([0.0,0.0,0.0])
 
     TARGET_DISTANCE = 4.5e-1
-    TARGET_VELOCITY = 3e-1 # in/s?
+    TARGET_VELOCITY = 10e-1 # in/s?
 
     FALL_THRESHOLD = -0.1
     CHANGE_MARGIN = 1e-5
@@ -249,23 +249,25 @@ class TerrainEnv(BaseEnv):
         velocity_x_diff = abs(linear_vel[0] - self.TARGET_VELOCITY)
 
         # Rewards
-        rew_survival = 50
+        rew_survival = 0.25
 
-        scale_rew_vel = 150
-        rew_velocity = min(800, scale_rew_vel/(velocity_x_diff))
-
+        # scale_rew_vel = 5300 * self.TARGET_VELOCITY
+        # rew_velocity = rewards.tolerance()
+        #(scale_rew_vel*velocity_x) + scale_rew_vel*velocity_x/(velocity_x_diff)
+        # min(150,scale_rew_vel*velocity_x) + min(550, scale_rew_vel*velocity_x/(velocity_x_diff))
         # Penalties
-        # scale_pen_ext = 0
-        # pen_extensions = net_extension_angles * scale_pen_ext
+        # scale_pen_ext = 100
+        # pen_extensions = scale_pen_ext * net_extension_angles
 
-        reward = rew_survival + rew_velocity # - pen_extensions
-
+        # print(f"VelRew: {rew_velocity}, ExtPen: {pen_extensions}")
+        # reward = min(0.8, rew_survival + rew_velocity - pen_extensions)
+        reward = 0
         if minimal_change:
             reward = rew_survival
         elif success:
-            reward = 1000
+            reward = 1
         elif fallen:
-            reward = -1000
+            reward = -1
 
 
         self.last_pose = robot_pose
@@ -314,5 +316,5 @@ class TerrainEnv(BaseEnv):
     def compute_normalized_dense_reward(
         self, obs: Any, action: torch.Tensor, info: Dict
     ):
-        max_reward = 1000.0
+        max_reward = 1.0
         return self.compute_dense_reward(obs=obs, action=action, info=info) / max_reward

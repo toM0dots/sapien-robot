@@ -257,7 +257,7 @@ class TwRobot(BaseAgent):
             damping=10,
             friction=joint_friction,
             normalize_action=False,
-            force_limit=1e2,
+            force_limit=1e1,
             # use_target=True,
             # use_delta=True,
         )
