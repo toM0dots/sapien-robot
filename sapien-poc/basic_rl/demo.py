@@ -9,9 +9,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import tw_robot
 import terrain_env
 from robot_recorder import RobotRecorder
+from datetime import datetime
+import torch
 
 # gym.make to gym.make_vec?
 # Setup the environment and robot
+
+
+
 env = gym.make("Terrain-env", 
                robot_uids="tw_robot", 
                render_mode="rgb_array", # When rendering the robot, the camera is facing the front of the robot (so it may appear reversed)
@@ -22,11 +27,16 @@ env = gym.make("Terrain-env",
 
 from stable_baselines3 import A2C
 model = A2C("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=15_000)
+model.learn(total_timesteps=20_000)
 # model.learn(total_timesteps=3)
 
 # Prepare snapshots/recording
 recorder = RobotRecorder()
+
+checkpoint = 5
+save_model = True
+eval_freq = 1
+model_path = f"runs/{datetime.now()}"
 
 
 capture_i = 0
@@ -48,22 +58,15 @@ capture_i = 0
 #                     [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0],
 #                     [50.0, 50.0, 50.0, 50.0, 2.0, 2.0, 2.0, 2.0], ])
 
+# if checkpoint:
+#         env.agent.set_state(torch.load(checkpoint))
+
 vec_env = model.get_env()
 obs, _ = env.reset()
-for i in range(150):
+for i in range(400):
     action, _state = model.predict(obs, deterministic=True)
-    # action = custom_actions[int(i / 25)]
-    # if(i == 25 or i == 75):
-    #     print("force reset")
-    #     env.reset()
 
-    
-    # print(str(i)+": ",action)
     obs, reward, terminated, truncated, info = env.step(action)
-    # obs, reward, done, info = vec_env.step(action)
-    # obs, reward, terminated, truncated = env.step(action)
-    # print(str(i)+": ",action,"\n",obs)
-    # vec_env.render("rgb_array")
     
     recorder.capture_image(env.render())
     
@@ -72,6 +75,10 @@ for i in range(150):
     #   obs = vec_env.reset()
         print("Terminated")
         break
+
+# if save_model:
+#         torch.save(env.env.agent.get_state(), model_path)
+#         print(f"model saved to {model_path}")
 
 # vec_env.close()
 env.close()

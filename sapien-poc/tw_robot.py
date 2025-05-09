@@ -240,9 +240,9 @@ class TwRobot(BaseAgent):
 
         wheel_pd_joint_delta_pos = PDJointPosControllerConfig(
             [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],
-            lower=-1000,
-            upper=1000,
-            stiffness=10,
+            lower=-2000,
+            upper=2000,
+            stiffness=100,
             damping=10,
             friction=joint_friction,
             normalize_action=False,
@@ -254,7 +254,7 @@ class TwRobot(BaseAgent):
             lower=0,
             upper=np.pi,
             stiffness=1000,
-            damping=10,
+            damping=1000,
             friction=joint_friction,
             normalize_action=False,
             force_limit=1e1,
