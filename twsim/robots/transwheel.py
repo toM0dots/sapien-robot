@@ -1,3 +1,8 @@
+"""
+TODO:
+- Define keyframes with extensions all the way out and all the way in
+"""
+
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import numpy as np
