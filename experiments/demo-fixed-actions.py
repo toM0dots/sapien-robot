@@ -14,7 +14,7 @@ from twsim.envs import terrain  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
 from twsim.utils import RobotRecorder
 
-env = gym.make("Terrain-env")
+env = gym.make("Terrain-env", render_mode="rgb_array")
 env.unwrapped.print_sim_details()  # type: ignore
 
 recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
