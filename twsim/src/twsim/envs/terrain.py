@@ -292,9 +292,9 @@ class TerrainEnv(BaseEnv):
 
         # print(f"")
 
-        print(
-            f"Reward: {reward:.3f}, RewVel: {rew_velocity:.3f}, PenExt: {pen_extensions:.3f} VX: {linear_vel[0]:.3f}, VelDiff: {velocity_x_diff:.3f}"
-        )
+        # print(
+        #     f"Reward: {reward:.3f}, RewVel: {rew_velocity:.3f}, PenExt: {pen_extensions:.3f} VX: {linear_vel[0]:.3f}, VelDiff: {velocity_x_diff:.3f}"
+        # )
 
         return torch.tensor([reward])
 

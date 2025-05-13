@@ -50,7 +50,7 @@ for stepi in range(max_steps):
     action = action_sequence[int(stepi / num_steps_per_action)]
 
     obs, reward, terminated, truncated, info = env.step(action)
-    # recorder.capture_image(env.render())
+    recorder.capture_image(env.render())
 
     done = terminated or truncated
     if done:
@@ -58,4 +58,4 @@ for stepi in range(max_steps):
 
 
 env.close()
-# recorder.create_video("output_video.mp4")
+recorder.save_as_video("output_video.mp4", overwrite=True)
