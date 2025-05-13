@@ -1,30 +1,25 @@
 """
+NOTE: The coordinate frame in Sapien is: x(forward), y(left), z(upward)
+
 TODO:
 - Define keyframes with extensions all the way out and all the way in
+- Check all physical dimensions (try different units)
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
-
 import numpy as np
-import sapien
-import torch
 from gymnasium import spaces
-from mani_skill.agents.base_agent import BaseAgent, Keyframe
-from mani_skill.agents.controllers import *
-from mani_skill.agents.controllers.base_controller import (
-    ControllerConfig,
-)
-from mani_skill.agents.controllers.pd_joint_pos import (
-    PDJointPosController,
-    PDJointPosControllerConfig,
-)
+from mani_skill.agents.base_agent import BaseAgent
+from mani_skill.agents.controllers import deepcopy_dict
+from mani_skill.agents.controllers.base_controller import ControllerConfig
+from mani_skill.agents.controllers.pd_joint_pos import PDJointPosControllerConfig
 from mani_skill.agents.registration import register_agent
-from mani_skill.envs.scene import ManiSkillScene
-from sapien import Pose, Scene
+from mani_skill.utils.structs import Articulation
+from sapien import Pose
 from transforms3d.euler import euler2quat
 
-DictControllerConfig = Dict[str, ControllerConfig]
-from mani_skill.utils.structs import Link
+# TODO: figure this out
+# from mani_skill.agents.controllers import *
+# PDJointPosController,
 
 # Robot Parameters
 
@@ -37,26 +32,24 @@ restitution = 0.1
 joint_friction = 0.0
 joint_damping = 0.0
 
-# The coordinate frame in Sapien is: x(forward), y(left), z(upward)
 
-chassis_length = 9e-2  # 16e-2
-chassis_width = 6e-2  # 32e-2
+chassis_length = 9e-2
+chassis_width = 6e-2
 chassis_thickness = 1e-2
-chassis_material = [0.4, 0.4, 0.0]
+chassis_material = (0.4, 0.4, 0.0)
 
-wheel_radius = 1.5e-2  # 5e-2
-wheel_thickness = 0.2e-2  # 1e-2
-wheel_material = [0.0, 0.4, 0.4]
+wheel_radius = 1.5e-2
+wheel_thickness = 0.2e-2
+wheel_material = (0.0, 0.4, 0.4)
 
-# TODO: Currently assumes 3 wheel extensions when copied
 num_wheel_extensions = 3
 
-wheel_extension_radial_offset = 0.875e-2  # wheel_radius / 1.2
+wheel_extension_radial_offset = 0.875e-2
 wheel_extension_angle_offset = np.deg2rad(20)
-wheel_extension_length = 1.625e-2  # wheel_radius / 3
-wheel_extension_width = 0.375e-2  # wheel_thickness
-wheel_extension_thickness = 0.2e-2  # wheel_thickness
-wheel_extension_material = [0.4, 0.0, 0.4]
+wheel_extension_length = 1.625e-2
+wheel_extension_width = 0.375e-2
+wheel_extension_thickness = 0.2e-2
+wheel_extension_material = (0.4, 0.0, 0.4)
 
 
 @register_agent()
@@ -65,18 +58,20 @@ class TransWheel(BaseAgent):
     fix_root_link = False
     disable_self_collisions = True
 
-    def create(self, initial_pos) -> sapien.physx.PhysxArticulation:
+    def create(self, initial_pos) -> Articulation:
         #
         # Chassis
         #
+
         robot_builder = self.scene.create_articulation_builder()
         robot_builder.initial_pose = initial_pos
 
-        chassis_half_size = [
+        chassis_half_size = (
             chassis_length / 2,
             chassis_width / 2,
             chassis_thickness / 2,
-        ]
+        )
+
         chassis_vertical_offset = wheel_radius + 7e-2
         chassis_pose = Pose(p=[0, 0, chassis_vertical_offset])
 
@@ -88,9 +83,11 @@ class TransWheel(BaseAgent):
         #
         # Wheels and revolute joints
         #
+
         wheel_half_thickness = wheel_thickness / 2
 
         front_rear_placement = chassis_half_size[0]
+        # TODO: what is the 1e-2 offset for?
         left_right_placement = chassis_half_size[1] + 1e-2
         ninety_deg = np.deg2rad(90)
 
@@ -142,10 +139,10 @@ class TransWheel(BaseAgent):
             wheel.set_joint_properties(
                 "revolute",
                 limits=[[-np.inf, np.inf]],
-                pose_in_parent=Pose(p=[fr, lr, 0], q=quat),
+                pose_in_parent=Pose(p=[fr, lr, 0], q=quat),  # type: ignore
                 pose_in_child=Pose(),
-                friction=joint_friction,
-                damping=joint_damping,
+                friction=joint_friction,  # type: ignore
+                damping=joint_damping,  # type: ignore
             )
 
             wheels[name] = wheel
@@ -158,11 +155,11 @@ class TransWheel(BaseAgent):
         #    y -> x
         #    z -> z
 
-        extension_half_size = [
+        extension_half_size = (
             wheel_extension_width / 2,
             wheel_extension_length / 2,
             wheel_extension_thickness / 2,
-        ]
+        )
 
         for name, fr, lr, quat in wheel_parameters:
             for i in range(num_wheel_extensions):
@@ -196,15 +193,16 @@ class TransWheel(BaseAgent):
                             + wheel_extension_angle_offset,
                             0,
                             0,
-                        ),
+                        ),  # type: ignore
                     ),
-                    friction=joint_friction,
-                    damping=joint_damping,
+                    friction=joint_friction,  # type: ignore
+                    damping=joint_damping,  # type: ignore
                 )
 
         #
         # Finalize the articulated robot
         #
+
         robot_builder.set_name("transwheel")
         robot = robot_builder.build()
 
@@ -212,27 +210,27 @@ class TransWheel(BaseAgent):
 
         joints = {joint.get_name(): joint for joint in robot.get_active_joints()}
 
+        # TODO: dig into joint mode options in more detail
+        # TODO: don't hardcode stiffness and damping
         joint_mode = "force"
 
-        for jname in joints:
-            if jname.startswith("wheel_joint"):
-                joints[jname].set_drive_properties(
+        for joint_name in joints:
+            if joint_name.startswith("wheel_joint"):
+                joints[joint_name].set_drive_properties(
                     stiffness=10, damping=100, mode=joint_mode
                 )
 
-            elif jname.startswith("extension_joint"):
-                joints[jname].set_drive_properties(
+            elif joint_name.startswith("extension_joint"):
+                joints[joint_name].set_drive_properties(
                     stiffness=1000, damping=10, mode=joint_mode
                 )
 
             else:
-                print("Ignoring", jname)
+                print("Ignoring", joint_name)
 
         return robot
 
-    def _load_articulation(
-        self, initial_pose: Optional[Union[sapien.Pose, Pose]] = None
-    ):
+    def _load_articulation(self, initial_pose: Pose | None = None):
         self.robot = self.create(initial_pose)
 
         # Cache robot link names
@@ -242,6 +240,7 @@ class TransWheel(BaseAgent):
     def action_space(self) -> spaces.Space:
         # Our control mode is pd_joint_delta_pos, never None
 
+        # TODO: remove this branch?
         if self._control_mode is None:
             return spaces.Dict(
                 {
@@ -254,13 +253,14 @@ class TransWheel(BaseAgent):
             # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
             original_space = self.controller.action_space
             return spaces.Box(
-                low=original_space.low[:8],
-                high=original_space.high[:8],
-                dtype=original_space.dtype,
+                low=original_space.low[:8],  # type: ignore
+                high=original_space.high[:8],  # type: ignore
+                dtype=original_space.dtype,  # type: ignore
             )
 
     @property
     def single_action_space(self) -> spaces.Space:
+        # TODO: do we need this and action_space?
         # Our control mode is pd_joint_delta_pos, never None
 
         if self._control_mode is None:
@@ -275,16 +275,17 @@ class TransWheel(BaseAgent):
             # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
             original_space = self.controller.single_action_space
             return spaces.Box(
-                low=original_space.low[:8],
-                high=original_space.high[:8],
-                dtype=original_space.dtype,
+                low=original_space.low[:8],  # type: ignore
+                high=original_space.high[:8],  # type: ignore
+                dtype=original_space.dtype,  # type: ignore
             )
 
     @property
-    def _controller_configs(
-        self,
-    ) -> Dict[str, Union[ControllerConfig, DictControllerConfig]]:
-        """Returns a dict of controller configs for this agent. By default this is a PDJointPos (delta and non delta) controller for all active joints."""
+    def _controller_configs(self) -> dict[str, ControllerConfig]:
+        """Returns a dict of controller configs for this agent.
+
+        By default this is a PDJointPos (delta and non delta) controller for all active joints.
+        """
 
         wheel_pd_joint_delta_pos = PDJointPosControllerConfig(
             [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],

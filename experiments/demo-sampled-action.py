@@ -15,13 +15,17 @@ from twsim.robots import transwheel  # noqa: F401
 env = gym.make("Terrain-env")
 env.unwrapped.print_sim_details()  # type: ignore
 
+
 # Reset with a seed for determinism
 obs, _ = env.reset(seed=0)
 
-done = False
-while not done:
+max_steps = 100
+for _ in range(max_steps):
     action = env.action_space.sample()
     obs, reward, terminated, truncated, info = env.step(action)
+
     done = terminated or truncated
+    if done:
+        break
 
 env.close()
