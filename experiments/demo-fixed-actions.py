@@ -10,7 +10,7 @@ import gymnasium as gym
 import numpy as np
 
 # Disable import warnings since gymnasium imports are based on strings
-from twsim.envs import terrain  # noqa: F401
+from twsim.envs import plane  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
 from twsim.utils import RobotRecorder
 

@@ -9,6 +9,7 @@ Run with: python demo-sampled-action.py
 import gymnasium as gym
 
 # Disable import warnings since gymnasium imports are based on strings
+# TODO: change to plane env
 from twsim.envs import terrain  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
 
