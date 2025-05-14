@@ -221,6 +221,7 @@ class TransWheel(BaseAgent):
         return robot
 
     def _load_articulation(self, initial_pose: Pose | None = None):
+        print(f"{initial_pose=}", type(initial_pose))
         self.robot = self.create(initial_pose)
 
         # Cache robot link names

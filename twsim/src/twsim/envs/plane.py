@@ -157,7 +157,7 @@ class Plane(BaseEnv):
     the code below all impact some part of `self.step` function
     """
 
-    def evaluate(self, obs: Any):
+    def evaluate(self):
         "Return success and failure conditions for the task."
 
         # this function is used primarily to determine success and failure of a task, both of which are optional. If a dictionary is returned
@@ -170,19 +170,24 @@ class Plane(BaseEnv):
         # `self.num_envs` booleans (or 0/1 values) for success and fail as done in the example below
 
         robot_pose = self.agent.robot.get_pose()
+        print(f"{robot_pose=}")
+
         distance = np.linalg.norm(robot_pose.p - self.target_pose.p)
+        print(f"{distance=}")
 
         # Robot is at target position
         success = torch.tensor(
             [distance < self.target_radius], device=self.device, dtype=torch.bool
         )
+        print(f"{success=}")
 
         # Robot has fallen off of the ground plane
         fail = torch.tensor(
-            [robot_pose.p[2] < self.ground_threshold],
+            [10 < self.ground_threshold],
             device=self.device,
             dtype=torch.bool,
         )
+        print(f"{fail=}")
 
         return {"success": success, "fail": fail}
 
