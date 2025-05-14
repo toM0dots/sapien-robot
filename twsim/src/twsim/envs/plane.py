@@ -179,7 +179,8 @@ class Plane(BaseEnv):
         # Robot is at target position
         near_target = distance < self.target_radius
         print(f"{near_target=}")
-        success = torch.tensor(near_target, device=self.device, dtype=torch.bool)
+        # success = torch.tensor(near_target, device=self.device, dtype=torch.bool)
+        success = near_target.type(torch.bool).to(device=self.device)
         print(f"{success=}")
 
         # Robot has fallen off of the ground plane
