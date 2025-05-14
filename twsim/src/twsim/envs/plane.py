@@ -170,25 +170,14 @@ class Plane(BaseEnv):
         # `self.num_envs` booleans (or 0/1 values) for success and fail as done in the example below
 
         robot_position = self.agent.robot.get_pose().get_p()
-        print(f"{robot_position.shape=}")
-        print(f"{self.target_pose.p.shape=}")
 
-        distance = torch.linalg.norm((robot_position.cpu() - self.target_pose.p), dim=1)
-        print(f"{distance.shape=}")
-
-        # Robot is at target position
+        distance = torch.linalg.norm((robot_position.cpu() - self.target_pose.p), dim=1)  # type: ignore
         near_target = distance < self.target_radius
-        print(f"{near_target=}")
-        # success = torch.tensor(near_target, device=self.device, dtype=torch.bool)
         success = near_target.type(torch.bool).to(device=self.device)
-        print(f"{success=}")
 
-        # Robot has fallen off of the ground plane
-        fail = torch.tensor(
-            [10 < self.ground_threshold],
-            device=self.device,
-            dtype=torch.bool,
-        )
+        vertical_position = robot_position[:, 2]
+        below_ground = vertical_position < self.ground_threshold
+        fail = below_ground.type(torch.bool).to(device=self.device)  # type: ignore
         print(f"{fail=}")
 
         return {"success": success, "fail": fail}
