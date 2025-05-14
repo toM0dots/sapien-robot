@@ -326,7 +326,9 @@ class TransWheel(BaseAgent):
         obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
         print("1:", obs)
         controller_state = self.controller.get_state()
+        print(f"{self._control_mode=}")
         print(f"{self.controller=}")
+        print(f"{self.controllers=}")
         print(f"{controller_state=}")
         if len(controller_state) > 0:
             obs.update(controller=controller_state)
