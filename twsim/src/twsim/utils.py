@@ -49,3 +49,5 @@ class RobotRecorder:
             video.write(frame)
 
         video.release()
+
+        print(f"Video saved as {video_name}")

@@ -35,15 +35,15 @@ normalized_speed = 0.2
 forward = torch.ones(4) * normalized_speed
 
 normalized_extension = -0.8
-not_extended = torch.ones(4) * normalized_extension
+extensions = torch.ones(4) * normalized_extension
 
 # TODO: set more explicit values
 action_sequence = [
     # torch.zeros_like(env.action_space.sample())
-    torch.cat((forward, not_extended)),
-    torch.cat((forward, not_extended)),
-    torch.cat((forward, not_extended)),
-    torch.cat((forward, not_extended)),
+    torch.cat((forward, extensions)),
+    torch.cat((forward, extensions)),
+    torch.cat((forward, extensions)),
+    torch.cat((forward, extensions)),
     # [62.825, 62.825, 62.825, 62.825, 0.0, 0.0, 0.0, 0.0],
     # [62.825, -62.825, 62.825, -62.825, 0.0, 0.0, 0.0, 0.0],
     # [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0],
