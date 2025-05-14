@@ -18,10 +18,6 @@ from mani_skill.utils.structs import Articulation
 from sapien import Pose
 from transforms3d.euler import euler2quat
 
-# TODO: figure this out
-# from mani_skill.agents.controllers import *
-# PDJointPosController,
-
 #
 # Robot Parameters
 #
@@ -74,7 +70,7 @@ class TransWheel(BaseAgent):
             chassis_thickness / 2,
         )
 
-        # TODO: remove?
+        # TODO: remove and use initial_pose?
         # chassis_vertical_offset = wheel_radius + 7e-2
         # chassis_pose = Pose(p=[0, 0, chassis_vertical_offset])
 
@@ -319,14 +315,14 @@ class TransWheel(BaseAgent):
         # Make a deepcopy in case users modify any config
         return deepcopy_dict(controller_configs)
 
-    def get_proprioception(self):
-        """
-        Get the proprioceptive state of the agent, default is the qpos and qvel of the robot and any controller state.
-        """
-        obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
-        # print("1:", obs)
-        controller_state = self.controller.get_state()
-        if len(controller_state) > 0:
-            obs.update(controller=controller_state)
-        # print("2:", obs)
-        return obs
+    # def get_proprioception(self):
+    #     """
+    #     Get the proprioceptive state of the agent, default is the qpos and qvel of the robot and any controller state.
+    #     """
+    #     obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
+    #     # print("1:", obs)
+    #     controller_state = self.controller.get_state()
+    #     if len(controller_state) > 0:
+    #         obs.update(controller=controller_state)
+    #     # print("2:", obs)
+    #     return obs
