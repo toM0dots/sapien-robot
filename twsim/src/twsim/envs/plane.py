@@ -170,11 +170,11 @@ class Plane(BaseEnv):
         # `self.num_envs` booleans (or 0/1 values) for success and fail as done in the example below
 
         robot_position = self.agent.robot.get_pose().get_p()
-        print(f"{robot_position=}")
-        print(f"{self.target_pose.p=}")
+        print(f"{robot_position.shape=}")
+        print(f"{self.target_pose.p.shape=}")
 
         distance = np.linalg.norm((robot_position.cpu() - self.target_pose.p))
-        print(f"{distance=}")
+        print(f"{distance.shape=}")
 
         # Robot is at target position
         success = torch.tensor(
