@@ -15,10 +15,12 @@ from twsim.robots import transwheel  # noqa: F401
 from twsim.utils import RobotRecorder
 
 # TODO: try with num_envs > 1
-env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=1)
+env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=4)
 env.unwrapped.print_sim_details()  # type: ignore
 print("Observation space", env.observation_space)
 print("Action space", env.action_space)
+
+raise SystemExit
 
 recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
 
