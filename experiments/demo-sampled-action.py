@@ -6,6 +6,8 @@ This script is used to test the custom robot and environment installation.
 Run with: python demo-sampled-action.py
 """
 
+# TODO: add command line arguments (e.g., num_envs)
+
 import gymnasium as gym
 
 # Disable import warnings since gymnasium imports are based on strings
