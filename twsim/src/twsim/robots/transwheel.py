@@ -268,19 +268,11 @@ class TransWheel(BaseAgent):
             if torch.isnan(action).any():
                 raise ValueError("Action cannot be NaN. Received:", action)
 
-        print(f"{action=}", type(action))
-        print(f"{action.shape=}")
-
         wheel_actions = action[..., :4]
-        print(f"{wheel_actions=}")
         extension_actions = action[..., 4:]
-        print(f"{extension_actions=}")
         extension_actions = action[..., 4:].repeat_interleave(num_extensions, dim=1)
-        print(f"{extension_actions=}")
 
         new_action = torch.cat((wheel_actions, extension_actions), dim=1)
-        print(f"{new_action=}", type(new_action))
-        print(f"{new_action.shape=}")
 
         self.controller.set_action(new_action)
 
