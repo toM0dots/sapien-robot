@@ -12,6 +12,7 @@ from mani_skill.agents.base_agent import BaseAgent
 from mani_skill.agents.controllers import deepcopy_dict
 from mani_skill.agents.controllers.base_controller import ControllerConfig
 from mani_skill.agents.controllers.pd_joint_pos import PDJointPosControllerConfig
+from mani_skill.agents.controllers.pd_joint_vel import PDJointVelControllerConfig
 from mani_skill.agents.registration import register_agent
 from mani_skill.utils.structs import Articulation
 from sapien import Pose
@@ -21,7 +22,9 @@ from transforms3d.euler import euler2quat
 # from mani_skill.agents.controllers import *
 # PDJointPosController,
 
+#
 # Robot Parameters
+#
 
 # control_freq = 100.0
 # timestep = 1 / control_freq
@@ -31,7 +34,6 @@ dynamic_friction = 10.0
 restitution = 0.1
 joint_friction = 0.0
 joint_damping = 0.0
-
 
 chassis_length = 9e-2
 chassis_width = 6e-2
@@ -72,8 +74,9 @@ class TransWheel(BaseAgent):
             chassis_thickness / 2,
         )
 
-        chassis_vertical_offset = wheel_radius + 7e-2
-        chassis_pose = Pose(p=[0, 0, chassis_vertical_offset])
+        # TODO: remove?
+        # chassis_vertical_offset = wheel_radius + 7e-2
+        # chassis_pose = Pose(p=[0, 0, chassis_vertical_offset])
 
         chassis = robot_builder.create_link_builder()
         chassis.set_name("chassis")
@@ -86,36 +89,17 @@ class TransWheel(BaseAgent):
 
         wheel_half_thickness = wheel_thickness / 2
 
-        front_rear_placement = chassis_half_size[0]
-        # TODO: what is the 1e-2 offset for?
-        left_right_placement = chassis_half_size[1] + 1e-2
-        ninety_deg = np.deg2rad(90)
+        front_rear_offset = chassis_half_size[0]
+        left_right_offset = chassis_half_size[1] + wheel_thickness
+
+        # NOTE: by default, cylinders are oriented along the x-axis
+        cylinder_rotation = euler2quat(0, 0, np.deg2rad(90))
 
         wheel_parameters = [
-            (
-                "front_left",
-                front_rear_placement,
-                left_right_placement,
-                euler2quat(0, 0, ninety_deg),
-            ),
-            (
-                "front_right",
-                front_rear_placement,
-                -left_right_placement,
-                euler2quat(0, 0, ninety_deg),
-            ),
-            (
-                "rear_left",
-                -front_rear_placement,
-                left_right_placement,
-                euler2quat(0, 0, ninety_deg),
-            ),
-            (
-                "rear_right",
-                -front_rear_placement,
-                -left_right_placement,
-                euler2quat(0, 0, ninety_deg),
-            ),
+            ("front_left", front_rear_offset, left_right_offset, cylinder_rotation),
+            ("front_right", front_rear_offset, -left_right_offset, cylinder_rotation),
+            ("rear_left", -front_rear_offset, left_right_offset, cylinder_rotation),
+            ("rear_right", -front_rear_offset, -left_right_offset, cylinder_rotation),
         ]
 
         wheels = {}
@@ -126,7 +110,6 @@ class TransWheel(BaseAgent):
             wheel.set_joint_name(f"wheel_joint_{name}")
 
             # TODO: convert to spheroid using convex mesh?
-            # NOTE: by default, cylinders are oriented along the x-axis
             wheel.add_cylinder_collision(
                 radius=wheel_radius, half_length=wheel_half_thickness
             )
@@ -154,6 +137,7 @@ class TransWheel(BaseAgent):
         #    x -> y
         #    y -> x
         #    z -> z
+        #
 
         extension_half_size = (
             wheel_extension_width / 2,
@@ -206,27 +190,33 @@ class TransWheel(BaseAgent):
         robot_builder.set_name("transwheel")
         robot = robot_builder.build()
 
-        robot.set_pose(chassis_pose)
+        # TODO: remove?
+        # robot.set_pose(chassis_pose)
 
-        joints = {joint.get_name(): joint for joint in robot.get_active_joints()}
+        # TODO: remove? this is handled by _controller_configs
+        if False:
+            joints = {joint.get_name(): joint for joint in robot.get_active_joints()}
 
-        # TODO: dig into joint mode options in more detail
-        # TODO: don't hardcode stiffness and damping
-        joint_mode = "force"
+            # TODO: dig into joint mode options in more detail
+            # TODO: don't hardcode stiffness and damping
+            joint_mode = "force"
 
-        for joint_name in joints:
-            if joint_name.startswith("wheel_joint"):
-                joints[joint_name].set_drive_properties(
-                    stiffness=10, damping=100, mode=joint_mode
-                )
+            for joint_name in joints:
+                if joint_name.startswith("wheel_joint"):
+                    joints[joint_name].set_drive_properties(
+                        stiffness=10, damping=100, mode=joint_mode
+                    )
 
-            elif joint_name.startswith("extension_joint"):
-                joints[joint_name].set_drive_properties(
-                    stiffness=1000, damping=10, mode=joint_mode
-                )
+                elif joint_name.startswith("extension_joint"):
+                    joints[joint_name].set_drive_properties(
+                        stiffness=1000, damping=10, mode=joint_mode
+                    )
 
-            else:
-                print("Ignoring", joint_name)
+                else:
+                    raise ValueError(
+                        f"Unknown joint name: {joint_name}. "
+                        "Expected to start with 'wheel_joint' or 'extension_joint'."
+                    )
 
         return robot
 
@@ -282,41 +272,65 @@ class TransWheel(BaseAgent):
 
     @property
     def _controller_configs(self) -> dict[str, ControllerConfig]:
-        """Returns a dict of controller configs for this agent.
+        "Returns a dict of controller configs for this agent."
 
-        By default this is a PDJointPos (delta and non delta) controller for all active joints.
-        """
+        joint_names = self.robot.active_joints
+        wheel_joint_names = [x.name for x in joint_names if "wheel_joint" in x.name]
+        ext_joint_names = [x.name for x in joint_names if "extension_joint" in x.name]
 
-        wheel_pd_joint_delta_pos = PDJointPosControllerConfig(
-            [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],
-            lower=-2000,
-            upper=2000,
-            stiffness=100,
-            damping=10,
-            friction=joint_friction,
-            normalize_action=False,
-            use_delta=True,
+        # TODO: should not be joint position
+        # wheel_pd_joint_delta_pos = PDJointPosControllerConfig(
+        #     [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],
+        #     lower=-2000,
+        #     upper=2000,
+        #     stiffness=100,
+        #     damping=10,
+        #     friction=joint_friction,
+        #     normalize_action=False,
+        #     use_delta=True,
+        # )
+
+        # TODO: set reasonable values
+        velocity_damping = 100
+
+        wheel_velocity_controllers = PDJointVelControllerConfig(
+            joint_names=wheel_joint_names,
+            # TODO: set to infinity?
+            lower=None,  # type: ignore
+            upper=None,  # type: ignore
+            damping=velocity_damping,
+            # force_limit: Union[float, Sequence[float]] = 1e10
+            # friction: Union[float, Sequence[float]] = 0.0
+            # normalize_action: bool = True
+            # drive_mode: Union[Sequence[DriveMode], DriveMode] = "force"
         )
 
-        extension_pd_joint_pos = PDJointPosControllerConfig(
-            [x.name for x in self.robot.active_joints if "extension_joint" in x.name],
+        # TODO: set reasonable values
+        position_stiffness = 1000
+        position_damping = 1000
+
+        extension_position_controllers = PDJointPosControllerConfig(
+            joint_names=ext_joint_names,
             lower=0,
             upper=np.pi,
-            stiffness=1000,
-            damping=1000,
-            friction=joint_friction,
-            normalize_action=False,
-            force_limit=1e1,
-            # use_target=True,
-            # use_delta=True,
+            stiffness=position_stiffness,
+            damping=position_damping,
+            # force_limit: Union[float, Sequence[float]] = 1e10
+            # friction: Union[float, Sequence[float]] = 0.0
+            # use_delta: bool = False
+            # use_target: bool = False
+            # interpolate: bool = False
+            # normalize_action: bool = True
+            # drive_mode: Union[Sequence[DriveMode], DriveMode] = "force"
         )
 
         controller_configs = dict(
             pd_joint_delta_pos=dict(
-                wheel_joint=wheel_pd_joint_delta_pos,  # 4 controllers for wheels
-                extension_joint=extension_pd_joint_pos,  # 3 controllers per wheel
-                balance_passive_force=False,  # Enable gravity
+                wheel_velocity=wheel_velocity_controllers,
+                extension_position=extension_position_controllers,
+                balance_passive_force=False,
             ),
+            # TODO: add a configuration with extension_velocity control
         )
 
         # Make a deepcopy in case users modify any config
