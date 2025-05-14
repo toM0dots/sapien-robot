@@ -248,7 +248,7 @@ class TransWheel(BaseAgent):
             high=controller_action_space.high[..., :num_actions],  # type: ignore
             dtype=controller_action_space.dtype,  # type: ignore
         )
-        print(f"{action_space.shape=}")
+        print(f"(batched) {action_space.shape=}")
 
         return action_space
 
@@ -264,11 +264,11 @@ class TransWheel(BaseAgent):
 
         # TODO: just return the space after debugging
         action_space = spaces.Box(
-            low=controller_action_space.low[:num_actions],  # type: ignore
-            high=controller_action_space.high[:num_actions],  # type: ignore
+            low=controller_action_space.low[..., :num_actions],  # type: ignore
+            high=controller_action_space.high[..., :num_actions],  # type: ignore
             dtype=controller_action_space.dtype,  # type: ignore
         )
-        print(f"{action_space.shape=}")
+        print(f"(single) {action_space.shape=}")
 
         return action_space
 
