@@ -327,9 +327,17 @@ class TransWheel(BaseAgent):
         # By default, the proprioceptive state is the qpos and qvel of the robot and any controller state.
         #     obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
         # We only need a subset of the data
-        wheel_velocities = self.robot.get_qvel()[:4]
-        extension_positions = self.robot.get_qpos()[4::num_wheel_extensions]
+        obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
+        print(f"{obs=}")
 
-        return dict(
+        wheel_velocities = self.robot.get_qvel()[:4]
+        print(f"{wheel_velocities=}")
+        extension_positions = self.robot.get_qpos()[4::num_wheel_extensions]
+        print(f"{extension_positions=}")
+
+        obs = dict(
             wheel_velocities=wheel_velocities, extension_positions=extension_positions
         )
+        print(f"{obs=}")
+
+        return obs
