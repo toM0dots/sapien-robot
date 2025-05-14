@@ -259,6 +259,21 @@ class TransWheel(BaseAgent):
             dtype=controller_action_space.dtype,  # type: ignore
         )
 
+    def set_action(self, action):
+        "Set the agent's action which is to be executed in the next environment timestep."
+
+        # Override the default set_action method so that we can expand back to the
+        # correct number of controllers.
+
+        if not self.scene.gpu_sim_enabled:
+            if np.isnan(action).any():
+                raise ValueError("Action cannot be NaN. Received:", action)
+
+        print(f"{action=}", type(action))
+        print(f"{action.shape=}")
+
+        self.controller.set_action(action)
+
     @property
     def _controller_configs(self) -> dict[str, ControllerConfig]:
         "Returns a dict of controller configs for this agent."
