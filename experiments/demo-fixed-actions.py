@@ -18,15 +18,15 @@ from twsim.utils import RobotRecorder
 
 parser = ArgumentParser(description="Fixed action sequence demo.")
 parser.add_argument("--num_envs", type=int, default=1, help="Number of environments.")
+parser.add_argument("--video", type=str, help="Output a video.")
 args = parser.parse_args()
 
 env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
 
 env.unwrapped.print_sim_details()  # type: ignore
 
-raise SystemExit
-
-recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
+if args.video:
+    recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
 
 # 24 rpm = 62.825 rad/s,    Sim freq = 100          Maybe 25.13
 # TODO: set more explicit values
@@ -64,7 +64,9 @@ for stepi in range(max_steps):
     action = action_sequence[action_index]
 
     obs, reward, terminated, truncated, info = env.step(action)
-    recorder.capture_image(env.render())
+
+    if args.video:
+        recorder.capture_image(env.render())
 
     done = terminated or truncated
     if done:
@@ -72,4 +74,6 @@ for stepi in range(max_steps):
 
 
 env.close()
-recorder.save_as_video("output_video.mp4", overwrite=True)
+
+if args.video:
+    recorder.save_as_video(args.video, overwrite=True)
