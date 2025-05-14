@@ -297,7 +297,7 @@ class TransWheel(BaseAgent):
             damping=velocity_damping,
             # force_limit: Union[float, Sequence[float]] = 1e10
             # friction: Union[float, Sequence[float]] = 0.0
-            normalize_action=False,
+            # normalize_action: bool = True
             # drive_mode: Union[Sequence[DriveMode], DriveMode] = "force"
         )
 
