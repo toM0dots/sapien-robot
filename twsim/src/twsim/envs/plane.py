@@ -158,7 +158,7 @@ class Plane(BaseEnv):
     """
 
     def evaluate(self):
-        "Return success and failure conditions for the task."
+        "(Batched) Return success and failure conditions for the task."
 
         # this function is used primarily to determine success and failure of a task, both of which are optional. If a dictionary is returned
         # containing "success": bool array indicating if the env is in success state or not, that is used as the terminated variable returned by
@@ -171,8 +171,10 @@ class Plane(BaseEnv):
 
         robot_pose = self.agent.robot.get_pose()
         print(f"{robot_pose=}")
+        print(f"{robot_pose.p=}")
+        print(f"{self.target_pose.p=}")
 
-        distance = np.linalg.norm(robot_pose.p - self.target_pose.p)
+        distance = np.linalg.norm((robot_pose.p - self.target_pose.p))
         print(f"{distance=}")
 
         # Robot is at target position
