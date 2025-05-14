@@ -260,7 +260,7 @@ class TransWheel(BaseAgent):
         )
 
     def set_action(self, action):
-        "Set the agent's action which is to be executed in the next environment timestep."
+        "(Batched) Set the agent's action which is to be executed in the next environment timestep."
 
         # Override the default set_action method so that we can expand back to the
         # correct number of controllers.
@@ -272,7 +272,14 @@ class TransWheel(BaseAgent):
         print(f"{action=}", type(action))
         print(f"{action.shape=}")
 
-        self.controller.set_action(action)
+        wheel_actions = action[..., :4]
+        extension_actions = action[..., 4:].repeat_interleave(num_wheel_extensions)
+
+        new_action = np.concatenate((wheel_actions, extension_actions), axis=-1)
+        print(f"{new_action=}", type(new_action))
+        print(f"{new_action.shape=}")
+
+        self.controller.set_action(new_action)
 
     @property
     def _controller_configs(self) -> dict[str, ControllerConfig]:
