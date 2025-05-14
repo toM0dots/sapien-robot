@@ -273,7 +273,9 @@ class TransWheel(BaseAgent):
         print(f"{action.shape=}")
 
         wheel_actions = action[..., :4]
+        print(f"{wheel_actions=}")
         extension_actions = action[..., 4:].repeat_interleave(num_wheel_extensions)
+        print(f"{extension_actions=}")
 
         new_action = np.concatenate((wheel_actions, extension_actions), axis=-1)
         print(f"{new_action=}", type(new_action))
