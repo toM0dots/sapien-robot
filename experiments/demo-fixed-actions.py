@@ -13,6 +13,7 @@ import numpy as np
 
 # Disable import warnings since gymnasium imports are based on strings
 from twsim.envs import plane  # noqa: F401
+from twsim.envs.plane import Plane
 from twsim.robots import transwheel  # noqa: F401
 from twsim.utils import RobotRecorder
 
@@ -21,9 +22,11 @@ parser.add_argument("--num_envs", type=int, default=1, help="Number of environme
 parser.add_argument("--video", type=str, help="Output a video.")
 args = parser.parse_args()
 
-env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
+env: Plane = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)  # type: ignore
 
 env.unwrapped.print_sim_details()  # type: ignore
+print(f"{env.reward_mode}")
+
 
 if args.video:
     recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
