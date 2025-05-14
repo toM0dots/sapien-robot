@@ -231,33 +231,44 @@ class TransWheel(BaseAgent):
     def action_space(self) -> spaces.Space:
         "(Batched) Although we have 4 + 4*num_wheel_extensions controllers, we only need 8 actions."
 
-        # When obtaining the action space, only keep the bottom 8 actions:
-        # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
-        original_space = self.controller.action_space
+        # The controller action space includes a space for each wheel and each extension
+        # We only need one space for each wheel and one space for each SET of extensions
+        # The controller configuration space is defined in _controller_configs, and it should
+        # first define the wheel controllers and then the extension controllers.
+        # We use that order here to define the action space based on the controller space.
+        controller_action_space = self.controller.action_space
 
-        print(f"{original_space=}")
+        num_actions = 8
 
-        return spaces.Box(
-            low=original_space.low[:8],  # type: ignore
-            high=original_space.high[:8],  # type: ignore
-            dtype=original_space.dtype,  # type: ignore
+        # TODO: just return the space after debugging
+        action_space = spaces.Box(
+            low=controller_action_space.low[:num_actions],  # type: ignore
+            high=controller_action_space.high[:num_actions],  # type: ignore
+            dtype=controller_action_space.dtype,  # type: ignore
         )
+        print(f"{action_space.shape=}")
+
+        return action_space
 
     @property
     def single_action_space(self) -> spaces.Space:
         "(Not Batched) Although we have 4 + 4*num_wheel_extensions controllers, we only need 8 actions."
 
-        # When obtaining the action space, only keep the bottom 8 actions:
-        # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
-        original_space = self.controller.action_space
+        # NOTE: see comments in action_space
 
-        print(f"(single) {original_space=}")
+        controller_action_space = self.controller.action_space
 
-        return spaces.Box(
-            low=original_space.low[:8],  # type: ignore
-            high=original_space.high[:8],  # type: ignore
-            dtype=original_space.dtype,  # type: ignore
+        num_actions = 8
+
+        # TODO: just return the space after debugging
+        action_space = spaces.Box(
+            low=controller_action_space.low[:num_actions],  # type: ignore
+            high=controller_action_space.high[:num_actions],  # type: ignore
+            dtype=controller_action_space.dtype,  # type: ignore
         )
+        print(f"{action_space.shape=}")
+
+        return action_space
 
     @property
     def _controller_configs(self) -> dict[str, ControllerConfig]:

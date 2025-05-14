@@ -178,7 +178,6 @@ class Plane(BaseEnv):
         vertical_position = robot_position[:, 2]
         below_ground = vertical_position < self.ground_threshold
         fail = below_ground.type(torch.bool).to(device=self.device)  # type: ignore
-        print(f"{fail=}")
 
         return {"success": success, "fail": fail}
 
