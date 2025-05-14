@@ -40,14 +40,14 @@ wheel_radius = 1.5e-2
 wheel_thickness = 0.2e-2
 wheel_material = (0.0, 0.4, 0.4)
 
-num_wheel_extensions = 3
+num_extensions = 3
 
-wheel_extension_radial_offset = 0.875e-2
-wheel_extension_angle_offset = np.deg2rad(20)
-wheel_extension_length = 1.625e-2
-wheel_extension_width = 0.375e-2
-wheel_extension_thickness = 0.2e-2
-wheel_extension_material = (0.4, 0.0, 0.4)
+extension_radial_offset = 0.875e-2
+extension_angle_offset = np.deg2rad(20)
+extension_length = 1.625e-2
+extension_width = 0.375e-2
+extension_thickness = 0.2e-2
+extension_material = (0.4, 0.0, 0.4)
 
 
 @register_agent()
@@ -136,13 +136,13 @@ class TransWheel(BaseAgent):
         #
 
         extension_half_size = (
-            wheel_extension_width / 2,
-            wheel_extension_length / 2,
-            wheel_extension_thickness / 2,
+            extension_width / 2,
+            extension_length / 2,
+            extension_thickness / 2,
         )
 
         for name, fr, lr, quat in wheel_parameters:
-            for i in range(num_wheel_extensions):
+            for i in range(num_extensions):
                 extension = robot_builder.create_link_builder(wheels[name])
                 extension.set_name(f"extension_{name}_{i}")
                 extension.set_joint_name(f"extension_joint_{name}_{i}")
@@ -150,15 +150,15 @@ class TransWheel(BaseAgent):
                 # TODO: convert to capsule?
                 extension.add_box_collision(half_size=extension_half_size)
                 extension.add_box_visual(
-                    half_size=extension_half_size, material=wheel_extension_material
+                    half_size=extension_half_size, material=extension_material
                 )
 
-                radial_angle = np.deg2rad(i / num_wheel_extensions * 360)
+                radial_angle = np.deg2rad(i / num_extensions * 360)
 
-                y = wheel_extension_radial_offset * np.cos(radial_angle)
-                z = wheel_extension_radial_offset * np.sin(radial_angle)
+                y = extension_radial_offset * np.cos(radial_angle)
+                z = extension_radial_offset * np.sin(radial_angle)
 
-                x = np.copysign(wheel_extension_width, lr)
+                x = np.copysign(extension_width, lr)
 
                 extension.set_joint_properties(
                     "revolute",
@@ -166,11 +166,9 @@ class TransWheel(BaseAgent):
                     limits=[[0, np.pi]],
                     pose_in_parent=Pose(p=[x, y, z]),
                     pose_in_child=Pose(
-                        p=[0, -wheel_extension_length / 2, 0],
+                        p=[0, -extension_length / 2, 0],
                         q=euler2quat(
-                            np.deg2rad(90)
-                            - radial_angle
-                            + wheel_extension_angle_offset,
+                            np.deg2rad(90) - radial_angle + extension_angle_offset,
                             0,
                             0,
                         ),  # type: ignore
@@ -352,6 +350,6 @@ class TransWheel(BaseAgent):
         #     obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
         # We only need a subset of the data
         wheel_vel = self.robot.get_qvel()[..., :4]
-        extension_pos = self.robot.get_qpos()[..., 4::num_wheel_extensions]
+        extension_pos = self.robot.get_qpos()[..., 4::num_extensions]
 
         return dict(wheel_velocities=wheel_vel, extension_positions=extension_pos)

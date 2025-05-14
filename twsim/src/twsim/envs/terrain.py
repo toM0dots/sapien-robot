@@ -12,7 +12,7 @@ from mani_skill.utils.registration import register_env
 from sapien import Pose
 from transforms3d.euler import euler2quat
 
-from twsim.robots.transwheel import num_wheel_extensions
+from twsim.robots.transwheel import num_extensions
 
 
 @register_env("Terrain-env", max_episode_steps=50)
@@ -189,7 +189,7 @@ class TerrainEnv(BaseEnv):
 
             repeated_extension_actions = torch.cat(
                 [
-                    extension_actions[i].repeat(num_wheel_extensions)
+                    extension_actions[i].repeat(num_extensions)
                     for i in range(len(extension_actions))
                 ]
             )
