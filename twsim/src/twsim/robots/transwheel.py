@@ -316,7 +316,7 @@ class TransWheel(BaseAgent):
         return deepcopy_dict(controller_configs)
 
     def get_proprioception(self):
-        "Return the proprioceptive state of the agent. (called by default env._get_obs_agent)"
+        "(Batched) Return the proprioceptive state of the agent. (called by default env._get_obs_agent)"
 
         controller_state = self.controller.get_state()
         if len(controller_state) > 0:
@@ -330,9 +330,9 @@ class TransWheel(BaseAgent):
         obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
         print(f"{obs=}")
 
-        wheel_velocities = self.robot.get_qvel()[:4]
+        wheel_velocities = self.robot.get_qvel()[..., :4]
         print(f"{wheel_velocities=}")
-        extension_positions = self.robot.get_qpos()[4::num_wheel_extensions]
+        extension_positions = self.robot.get_qpos()[..., 4::num_wheel_extensions]
         print(f"{extension_positions=}")
 
         obs = dict(
