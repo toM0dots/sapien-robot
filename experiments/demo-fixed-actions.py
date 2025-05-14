@@ -15,7 +15,7 @@ from twsim.robots import transwheel  # noqa: F401
 from twsim.utils import RobotRecorder
 
 # TODO: try with num_envs > 1
-env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=4)
+env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=2)
 env.unwrapped.print_sim_details()  # type: ignore
 print("Observation space", env.observation_space)
 print("Action space", env.action_space)
