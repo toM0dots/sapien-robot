@@ -173,7 +173,7 @@ class Plane(BaseEnv):
         print(f"{robot_position.shape=}")
         print(f"{self.target_pose.p.shape=}")
 
-        distance = np.linalg.norm((robot_position.cpu() - self.target_pose.p), axis=1)
+        distance = torch.linalg.norm((robot_position.cpu() - self.target_pose.p), dim=1)
         print(f"{distance.shape=}")
 
         # Robot is at target position
