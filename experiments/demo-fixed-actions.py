@@ -23,8 +23,6 @@ args = parser.parse_args()
 env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
 
 env.unwrapped.print_sim_details()  # type: ignore
-print("Observation space", env.observation_space)
-print("Action space", env.action_space)
 
 raise SystemExit
 
