@@ -169,12 +169,11 @@ class Plane(BaseEnv):
         # `_get_obs_extra` and `_compute_dense_reward`. Note that as everything is batched, you must return a batched array of
         # `self.num_envs` booleans (or 0/1 values) for success and fail as done in the example below
 
-        robot_pose = self.agent.robot.get_pose()
-        print(f"{robot_pose=}")
-        print(f"{robot_pose.p=}")
+        robot_position = self.agent.robot.get_pose().get_p()
+        print(f"{robot_position=}")
         print(f"{self.target_pose.p=}")
 
-        distance = np.linalg.norm((robot_pose.p - self.target_pose.p))
+        distance = np.linalg.norm((robot_position.cpu() - self.target_pose.p))
         print(f"{distance=}")
 
         # Robot is at target position
