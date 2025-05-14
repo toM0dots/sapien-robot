@@ -31,8 +31,11 @@ if args.video:
     # TODO: recorder should take into account the number of envs
     recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
 
-forward = torch.ones(4)
-not_extended = torch.ones(4) * -1
+normalized_speed = 0.2
+forward = torch.ones(4) * normalized_speed
+
+normalized_extension = -0.8
+not_extended = torch.ones(4) * normalized_extension
 
 # TODO: set more explicit values
 action_sequence = [
