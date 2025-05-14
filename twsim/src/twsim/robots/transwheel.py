@@ -316,21 +316,20 @@ class TransWheel(BaseAgent):
         return deepcopy_dict(controller_configs)
 
     def get_proprioception(self):
-        "Return the proprioceptive state of the agent."
+        "Return the proprioceptive state of the agent. (called by default env._get_obs_agent)"
+
+        controller_state = self.controller.get_state()
+        if len(controller_state) > 0:
+            raise ValueError("Controller state is not empty. This is unexpected.")
+
+        # TODO: proprioception depends on the controller mode (extensions as position or velocity)
 
         # By default, the proprioceptive state is the qpos and qvel of the robot and any controller state.
+        #     obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
+        # We only need a subset of the data
+        wheel_velocities = self.robot.get_qvel()[:4]
+        extension_positions = self.robot.get_qpos()[4::num_wheel_extensions]
 
-        """
-        Get the proprioceptive state of the agent, default is the qpos and qvel of the robot and any controller state.
-        """
-        obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
-        print("1:", obs)
-        controller_state = self.controller.get_state()
-        print(f"{self._control_mode=}")
-        print(f"{self.controller=}")
-        print(f"{self.controllers=}")
-        print(f"{controller_state=}")
-        if len(controller_state) > 0:
-            obs.update(controller=controller_state)
-        print("2:", obs)
-        return obs
+        return dict(
+            wheel_velocities=wheel_velocities, extension_positions=extension_positions
+        )
