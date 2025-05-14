@@ -38,18 +38,20 @@ class Plane(BaseEnv):
         self, *args, robot_uids="transwheel", robot_init_qpos_noise=0.02, **kwargs
     ):
         # TODO: initial position noise is not used
+        # TODO: set an initial position for the robot
         self.robot_init_qpos_noise = robot_init_qpos_noise
+        self.initial_pose = sapien.Pose()
 
-        # TODO: let user pass in target position/pose
+        # TODO: let user pass in target position/pose and radius
         self.target_pose = sapien.Pose(p=[0.5, 0.5, 0.0], q=[1.0, 0.0, 0.0, 0.0])
         self.target_radius = 0.05
+
         self.ground_threshold = -0.1
 
-        # TODO: set an initial position for the robot
-        self.initial_pose = sapien.Pose()
-        super().__init__(*args, robot_uids=robot_uids, **kwargs)
-
         self.chassis_lin_vel_prev = 0
+
+        # Calling super last since some of the functionality below is called and depends on the variables above
+        super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
     # Specify default simulation/gpu memory configurations. Note that tasks need to tune their GPU memory configurations accordingly
     # in order to save memory while also running with no errors. In general you can start with low values and increase them
