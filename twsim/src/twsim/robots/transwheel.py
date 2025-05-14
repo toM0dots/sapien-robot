@@ -238,7 +238,7 @@ class TransWheel(BaseAgent):
         # first define the wheel controllers and then the extension controllers.
         # We use that order here to define the action space based on the controller space.
         controller_action_space = self.controller.action_space
-        print(f"🚀 ~ {controller_action_space=}")
+        print(f"{controller_action_space.shape=}")
 
         num_actions = 8
 
