@@ -7,6 +7,7 @@ TODO:
 """
 
 import numpy as np
+import torch
 from gymnasium import spaces
 from mani_skill.agents.base_agent import BaseAgent
 from mani_skill.agents.controllers import deepcopy_dict
@@ -264,7 +265,7 @@ class TransWheel(BaseAgent):
         # correct number of controllers.
 
         if not self.scene.gpu_sim_enabled:
-            if np.isnan(action).any():
+            if torch.isnan(action).any():
                 raise ValueError("Action cannot be NaN. Received:", action)
 
         print(f"{action=}", type(action))
@@ -272,10 +273,12 @@ class TransWheel(BaseAgent):
 
         wheel_actions = action[..., :4]
         print(f"{wheel_actions=}")
-        extension_actions = action[..., 4:].repeat_interleave(num_wheel_extensions)
+        extension_actions = action[..., 4:]
+        print(f"{extension_actions=}")
+        extension_actions = action[..., 4:].repeat_interleave(num_extensions, dim=1)
         print(f"{extension_actions=}")
 
-        new_action = np.concatenate((wheel_actions, extension_actions), axis=-1)
+        new_action = torch.cat((wheel_actions, extension_actions), dim=1)
         print(f"{new_action=}", type(new_action))
         print(f"{new_action.shape=}")
 
