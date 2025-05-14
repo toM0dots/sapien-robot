@@ -6,6 +6,8 @@ This script is used to test the custom robot and environment without learning.
 Run with: python demo-fixed-actions.py
 """
 
+from argparse import ArgumentParser
+
 import gymnasium as gym
 import numpy as np
 
@@ -14,8 +16,12 @@ from twsim.envs import plane  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
 from twsim.utils import RobotRecorder
 
-# TODO: try with num_envs > 1
-env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=2)
+parser = ArgumentParser(description="Fixed action sequence demo.")
+parser.add_argument("--num_envs", type=int, default=1, help="Number of environments.")
+args = parser.parse_args()
+
+env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
+
 env.unwrapped.print_sim_details()  # type: ignore
 print("Observation space", env.observation_space)
 print("Action space", env.action_space)
