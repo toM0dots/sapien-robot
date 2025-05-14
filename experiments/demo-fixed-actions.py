@@ -24,10 +24,11 @@ args = parser.parse_args()
 env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
 
 env.unwrapped.print_sim_details()  # type: ignore
-print(f"{env.unwrapped.reward_mode}")  # type: ignore
+print(f"{env.unwrapped.reward_mode=}")  # type: ignore
 
 
 if args.video:
+    # TODO: recorder should take into account the number of envs
     recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
 
 # 24 rpm = 62.825 rad/s,    Sim freq = 100          Maybe 25.13

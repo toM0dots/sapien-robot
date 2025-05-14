@@ -38,9 +38,10 @@ class Plane(BaseEnv):
         self, *args, robot_uids="transwheel", robot_init_qpos_noise=0.02, **kwargs
     ):
         # TODO: initial position noise is not used
-        # TODO: set an initial position for the robot
         self.robot_init_qpos_noise = robot_init_qpos_noise
-        self.initial_pose = sapien.Pose()
+
+        # TODO: set an initial position for the robot based on terrain and robot dimensions
+        self.initial_pose = sapien.Pose(p=[0.0, 0.0, 4e-2])
 
         # TODO: let user pass in target position/pose and radius
         self.target_pose = sapien.Pose(p=[0.5, 0.5, 0.0], q=[1.0, 0.0, 0.0, 0.0])
@@ -152,14 +153,14 @@ class Plane(BaseEnv):
         # robot_position = self.agent.robot.get_pose().get_p()
         # return torch.linalg.norm((robot_position.cpu() - self.target_pose.p), dim=1)  # type: ignore
         robot_position = self.agent.robot.get_pose().get_p()
-        print(f"{robot_position=}")
-        print(f"{robot_position.shape=}")
-        print(f"{self.target_pose.p=}")
-        print(f"{self.target_pose.p.shape=}")
+        # print(f"{robot_position=}")
+        # print(f"{robot_position.shape=}")
+        # print(f"{self.target_pose.p=}")
+        # print(f"{self.target_pose.p.shape=}")
 
         distance = torch.linalg.norm((robot_position.cpu() - self.target_pose.p), dim=1)  # type: ignore
-        print(f"{distance=}")
-        print(f"{distance.shape=}")
+        # print(f"{distance=}")
+        # print(f"{distance.shape=}")
 
         return distance
 
