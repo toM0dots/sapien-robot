@@ -49,6 +49,7 @@ class Plane(BaseEnv):
         self.ground_threshold = -0.1
 
         self.chassis_lin_vel_prev = 0
+        self.distance_prev = None
 
         # Calling super last since some of the functionality below is called and depends on the variables above
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
@@ -218,6 +219,7 @@ class Plane(BaseEnv):
         print(f"{distance=}")
         print(f"{distance.shape=}")
 
+        self.distance_prev = self.distance_prev or distance
         moving_forward = distance < self.distance_prev
         self.distance_prev = distance
 
