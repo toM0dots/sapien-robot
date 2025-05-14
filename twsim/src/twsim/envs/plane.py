@@ -223,11 +223,11 @@ class Plane(BaseEnv):
         moving_forward = distance < self.distance_prev
         self.distance_prev = distance
 
-        reward = torch.ones(self.num_envs, device=self.device) * moving_forward
+        reward = torch.ones(self.num_envs) * moving_forward
         print(f"{reward=}")
         print(f"{reward.shape=}")
 
-        return reward
+        return reward.to(device=self.device)
 
     def compute_normalized_dense_reward(self, obs, action: torch.Tensor, info: dict):
         "Equal to compute_dense_reward / max possible reward."
