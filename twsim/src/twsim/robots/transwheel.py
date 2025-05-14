@@ -258,14 +258,15 @@ class TransWheel(BaseAgent):
 
         # NOTE: see comments in action_space
 
-        controller_action_space = self.controller.action_space
+        # NOTE: the difference here is the use of single action space on the controller
+        controller_action_space = self.controller.single_action_space
 
         num_actions = 8
 
         # TODO: just return the space after debugging
         action_space = spaces.Box(
-            low=controller_action_space.low[..., :num_actions],  # type: ignore
-            high=controller_action_space.high[..., :num_actions],  # type: ignore
+            low=controller_action_space.low[:num_actions],  # type: ignore
+            high=controller_action_space.high[:num_actions],  # type: ignore
             dtype=controller_action_space.dtype,  # type: ignore
         )
         print(f"(single) {action_space.shape=}")
