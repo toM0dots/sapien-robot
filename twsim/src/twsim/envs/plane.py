@@ -49,6 +49,8 @@ class Plane(BaseEnv):
         self.initial_pose = sapien.Pose()
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
+        self.chassis_lin_vel_prev = 0
+
     # Specify default simulation/gpu memory configurations. Note that tasks need to tune their GPU memory configurations accordingly
     # in order to save memory while also running with no errors. In general you can start with low values and increase them
     # depending on the messages that show up when you try to run more environments in parallel. Since this is a python property
