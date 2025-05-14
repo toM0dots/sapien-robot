@@ -149,8 +149,19 @@ class Plane(BaseEnv):
 
     def distance_to_target(self) -> torch.Tensor:
         "(Batched) Return the distance to the target position."
+        # robot_position = self.agent.robot.get_pose().get_p()
+        # return torch.linalg.norm((robot_position.cpu() - self.target_pose.p), dim=1)  # type: ignore
         robot_position = self.agent.robot.get_pose().get_p()
-        return torch.linalg.norm((robot_position.cpu() - self.target_pose.p), dim=1)  # type: ignore
+        print(f"{robot_position=}")
+        print(f"{robot_position.shape=}")
+        print(f"{self.target_pose.p=}")
+        print(f"{self.target_pose.p.shape=}")
+
+        distance = torch.linalg.norm((robot_position.cpu() - self.target_pose.p), dim=1)  # type: ignore
+        print(f"{distance=}")
+        print(f"{distance.shape=}")
+
+        return distance
 
     def evaluate(self):
         "(Batched) Return success and failure conditions for the task."
