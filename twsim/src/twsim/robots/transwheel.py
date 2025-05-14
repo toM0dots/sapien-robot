@@ -315,14 +315,18 @@ class TransWheel(BaseAgent):
         # Make a deepcopy in case users modify any config
         return deepcopy_dict(controller_configs)
 
-    # def get_proprioception(self):
-    #     """
-    #     Get the proprioceptive state of the agent, default is the qpos and qvel of the robot and any controller state.
-    #     """
-    #     obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
-    #     # print("1:", obs)
-    #     controller_state = self.controller.get_state()
-    #     if len(controller_state) > 0:
-    #         obs.update(controller=controller_state)
-    #     # print("2:", obs)
-    #     return obs
+    def get_proprioception(self):
+        "Return the proprioceptive state of the agent."
+
+        # By default, the proprioceptive state is the qpos and qvel of the robot and any controller state.
+
+        """
+        Get the proprioceptive state of the agent, default is the qpos and qvel of the robot and any controller state.
+        """
+        obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
+        print("1:", obs)
+        controller_state = self.controller.get_state()
+        if len(controller_state) > 0:
+            obs.update(controller=controller_state)
+        print("2:", obs)
+        return obs
