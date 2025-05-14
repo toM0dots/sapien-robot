@@ -1,0 +1,18 @@
+{
+    "cSpell.words": [
+        "fourcc",
+        "fromarray",
+        "imread",
+        "imwrite",
+        "linalg",
+        "physx",
+        "qpos",
+        "qvel",
+        "sapien",
+        "setuptools",
+        "stepi",
+        "transwheel",
+        "twsim",
+        "uids"
+    ]
+}
