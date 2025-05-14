@@ -9,7 +9,7 @@ Run with: python demo-fixed-actions.py
 from argparse import ArgumentParser
 
 import gymnasium as gym
-import numpy as np
+import torch
 
 # Disable import warnings since gymnasium imports are based on strings
 from twsim.envs import plane  # noqa: F401
@@ -31,33 +31,37 @@ if args.video:
     # TODO: recorder should take into account the number of envs
     recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
 
-# 24 rpm = 62.825 rad/s,    Sim freq = 100          Maybe 25.13
+forward = torch.ones(4) * 10
+not_extended = torch.zeros(4)
+
 # TODO: set more explicit values
-action_sequence = np.array(
-    [
-        np.zeros_like(env.action_space.sample())
-        # [62.825, 62.825, 62.825, 62.825, 0.0, 0.0, 0.0, 0.0],
-        # [62.825, -62.825, 62.825, -62.825, 0.0, 0.0, 0.0, 0.0],
-        # [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0],
-        # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-        # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-        # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-        # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-        # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-        # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
-        # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
-        # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-        # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-        # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
-        # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
-        # [62.825, 62.825, 62.825, 24, 2.0, 2.0, 2.0, 2.0],
-    ]
-)
+action_sequence = [
+    # torch.zeros_like(env.action_space.sample())
+    torch.cat((forward, not_extended)),
+    torch.cat((forward, not_extended)),
+    torch.cat((forward, not_extended)),
+    torch.cat((forward, not_extended)),
+    # [62.825, 62.825, 62.825, 62.825, 0.0, 0.0, 0.0, 0.0],
+    # [62.825, -62.825, 62.825, -62.825, 0.0, 0.0, 0.0, 0.0],
+    # [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0],
+    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
+    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
+    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
+    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
+    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
+    # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
+    # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
+    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
+    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
+    # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
+    # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
+    # [62.825, 62.825, 62.825, 24, 2.0, 2.0, 2.0, 2.0],
+]
 
 obs, _ = env.reset(seed=0)
 
 num_steps_per_action = 25
-max_steps = 100
+max_steps = 500
 
 for stepi in range(max_steps):
     action_index = int(stepi / num_steps_per_action)
