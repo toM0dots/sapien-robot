@@ -229,47 +229,35 @@ class TransWheel(BaseAgent):
 
     @property
     def action_space(self) -> spaces.Space:
-        # Our control mode is pd_joint_delta_pos, never None
+        "(Batched) Although we have 4 + 4*num_wheel_extensions controllers, we only need 8 actions."
 
-        # TODO: remove this branch?
-        if self._control_mode is None:
-            return spaces.Dict(
-                {
-                    uid: controller.action_space
-                    for uid, controller in self.controllers.items()
-                }
-            )
-        else:
-            # When obtaining the action space, only keep the bottom 8 actions:
-            # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
-            original_space = self.controller.action_space
-            return spaces.Box(
-                low=original_space.low[:8],  # type: ignore
-                high=original_space.high[:8],  # type: ignore
-                dtype=original_space.dtype,  # type: ignore
-            )
+        # When obtaining the action space, only keep the bottom 8 actions:
+        # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
+        original_space = self.controller.action_space
+
+        print(f"{original_space=}")
+
+        return spaces.Box(
+            low=original_space.low[:8],  # type: ignore
+            high=original_space.high[:8],  # type: ignore
+            dtype=original_space.dtype,  # type: ignore
+        )
 
     @property
     def single_action_space(self) -> spaces.Space:
-        # TODO: do we need this and action_space?
-        # Our control mode is pd_joint_delta_pos, never None
+        "(Not Batched) Although we have 4 + 4*num_wheel_extensions controllers, we only need 8 actions."
 
-        if self._control_mode is None:
-            return spaces.Dict(
-                {
-                    uid: controller.single_action_space
-                    for uid, controller in self.controllers.items()
-                }
-            )
-        else:
-            # When obtaining the action space, only keep the bottom 8 actions:
-            # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
-            original_space = self.controller.single_action_space
-            return spaces.Box(
-                low=original_space.low[:8],  # type: ignore
-                high=original_space.high[:8],  # type: ignore
-                dtype=original_space.dtype,  # type: ignore
-            )
+        # When obtaining the action space, only keep the bottom 8 actions:
+        # 4 unique wheel actions, 4 unique extensions (are copied in _step_action in env)
+        original_space = self.controller.action_space
+
+        print(f"(single) {original_space=}")
+
+        return spaces.Box(
+            low=original_space.low[:8],  # type: ignore
+            high=original_space.high[:8],  # type: ignore
+            dtype=original_space.dtype,  # type: ignore
+        )
 
     @property
     def _controller_configs(self) -> dict[str, ControllerConfig]:
@@ -279,30 +267,20 @@ class TransWheel(BaseAgent):
         wheel_joint_names = [x.name for x in joint_names if "wheel_joint" in x.name]
         ext_joint_names = [x.name for x in joint_names if "extension_joint" in x.name]
 
-        # TODO: should not be joint position
-        # wheel_pd_joint_delta_pos = PDJointPosControllerConfig(
-        #     [x.name for x in self.robot.active_joints if "wheel_joint" in x.name],
-        #     lower=-2000,
-        #     upper=2000,
-        #     stiffness=100,
-        #     damping=10,
-        #     friction=joint_friction,
-        #     normalize_action=False,
-        #     use_delta=True,
-        # )
-
-        # TODO: set reasonable values
+        # TODO: set reasonable values (pass in as arguments to class?)
+        max_linear_velocity = 0.5  # inches / second ?
+        max_angular_velocity = max_linear_velocity / wheel_radius
         velocity_damping = 100
 
         wheel_velocity_controllers = PDJointVelControllerConfig(
             joint_names=wheel_joint_names,
             # TODO: set to infinity?
-            lower=None,  # type: ignore
-            upper=None,  # type: ignore
+            lower=-max_angular_velocity,
+            upper=max_angular_velocity,
             damping=velocity_damping,
             # force_limit: Union[float, Sequence[float]] = 1e10
             # friction: Union[float, Sequence[float]] = 0.0
-            # normalize_action: bool = True
+            normalize_action=False,
             # drive_mode: Union[Sequence[DriveMode], DriveMode] = "force"
         )
 
