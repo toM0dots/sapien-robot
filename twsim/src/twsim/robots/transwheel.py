@@ -236,42 +236,32 @@ class TransWheel(BaseAgent):
         # We only need one space for each wheel and one space for each SET of extensions
         # The controller configuration space is defined in _controller_configs, and it should
         # first define the wheel controllers and then the extension controllers.
-        # We use that order here to define the action space based on the controller space.
+        # We use that order here to define the action space based on the controller space so that
+        # we are only setting limits in one place. Alternatively, we could define a normalized
+        # action space for both the controller config and here, but it still separates the logic
+        # into two places that would need to be kept in sync.
         controller_action_space = self.controller.action_space
-        print(f"{controller_action_space.shape=}")
 
         num_actions = 8
-
-        # TODO: just return the space after debugging
-        action_space = spaces.Box(
+        return spaces.Box(
             low=controller_action_space.low[..., :num_actions],  # type: ignore
             high=controller_action_space.high[..., :num_actions],  # type: ignore
             dtype=controller_action_space.dtype,  # type: ignore
         )
-        print(f"(batched) {action_space.shape=}")
-
-        return action_space
 
     @property
     def single_action_space(self) -> spaces.Space:
         "(Not Batched) Although we have 4 + 4*num_wheel_extensions controllers, we only need 8 actions."
-
         # NOTE: see comments in action_space
 
         # NOTE: the difference here is the use of single action space on the controller
         controller_action_space = self.controller.single_action_space
-
         num_actions = 8
-
-        # TODO: just return the space after debugging
-        action_space = spaces.Box(
+        return spaces.Box(
             low=controller_action_space.low[:num_actions],  # type: ignore
             high=controller_action_space.high[:num_actions],  # type: ignore
             dtype=controller_action_space.dtype,  # type: ignore
         )
-        print(f"(single) {action_space.shape=}")
-
-        return action_space
 
     @property
     def _controller_configs(self) -> dict[str, ControllerConfig]:
