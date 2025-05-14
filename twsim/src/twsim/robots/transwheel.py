@@ -304,7 +304,7 @@ class TransWheel(BaseAgent):
         )
 
         controller_configs = dict(
-            pd_joint_delta_pos=dict(
+            wheel_vel_ext_pos=dict(
                 wheel_velocity=wheel_velocity_controllers,
                 extension_position=extension_position_controllers,
                 balance_passive_force=False,
