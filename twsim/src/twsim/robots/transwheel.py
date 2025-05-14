@@ -221,7 +221,8 @@ class TransWheel(BaseAgent):
         return robot
 
     def _load_articulation(self, initial_pose: Pose | None = None):
-        print(f"{initial_pose=}", type(initial_pose))
+        # TODO: remove this statement once debugged
+        # print(f"{initial_pose=}", type(initial_pose))
         self.robot = self.create(initial_pose)
 
         # Cache robot link names
@@ -237,6 +238,7 @@ class TransWheel(BaseAgent):
         # first define the wheel controllers and then the extension controllers.
         # We use that order here to define the action space based on the controller space.
         controller_action_space = self.controller.action_space
+        print(f"🚀 ~ {controller_action_space=}")
 
         num_actions = 8
 
