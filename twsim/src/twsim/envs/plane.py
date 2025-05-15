@@ -118,7 +118,7 @@ class Plane(BaseEnv):
                 width=512,
                 height=512,
                 fov=1,
-                mount=self.agent.robot,
+                mount=self.agent.robot.get_root(),
             )
         ]
 
