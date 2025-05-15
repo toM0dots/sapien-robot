@@ -86,16 +86,6 @@ class Plane(BaseEnv):
         self.scene.set_ambient_light([0.5, 0.5, 0.5])
         self.scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5])
 
-        # scene: ManiSkillScene,
-        # floor_width: int = 100,
-        # floor_length: int = None,
-        # xy_origin: tuple = (0, 0),
-        # altitude=0,
-        # name="ground",
-        # texture_file=osp.join(osp.dirname(__file__), "assets/grid_texture.png"),
-        # texture_square_len=4,
-        # mipmap_levels=4,
-        # add_collision=True,
         self.ground = build_ground(
             self.scene,
             floor_width=2,
