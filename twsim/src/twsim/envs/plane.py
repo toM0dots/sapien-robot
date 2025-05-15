@@ -111,7 +111,16 @@ class Plane(BaseEnv):
         # Another feature here is that if there is a camera called render_camera, this is the default view shown initially when a GUI is opened
         pose = sapien_utils.look_at(eye=[0.6, 0.7, 0.6], target=[0.0, 0.0, 0.35])
         # TODO: look into other camera options (specifically the entity uid and mount)
-        return [CameraConfig("render_camera", pose, width=512, height=512, fov=1)]
+        return [
+            CameraConfig(
+                "render_camera",
+                pose,
+                width=512,
+                height=512,
+                fov=1,
+                mount=self.agent.robot,
+            )
+        ]
 
     # def _setup_sensors(self, options: dict):
     #     # default code here will setup all sensors. You can add additional code to change the sensors e.g.

@@ -3,7 +3,8 @@ NOTE: The coordinate frame in Sapien is: x(forward), y(left), z(upward)
 
 TODO:
 - Define keyframes with extensions all the way out and all the way in
-- Check all physical dimensions (try different units)
+- Check all physical dimensions (try different units/scales)
+- Add video recording as an option
 """
 
 import numpy as np
