@@ -83,7 +83,22 @@ class Plane(BaseEnv):
     def _load_scene(self, options: dict):
         "Construct the scene ManiSkill will automatically create actors in every sub-scene)."
 
-        self.ground = build_ground(self.scene)
+        # scene: ManiSkillScene,
+        # floor_width: int = 100,
+        # floor_length: int = None,
+        # xy_origin: tuple = (0, 0),
+        # altitude=0,
+        # name="ground",
+        # texture_file=osp.join(osp.dirname(__file__), "assets/grid_texture.png"),
+        # texture_square_len=4,
+        # mipmap_levels=4,
+        # add_collision=True,
+        self.ground = build_ground(
+            self.scene,
+            floor_width=10,
+            floor_length=15e-2,  # type: ignore
+            texture_square_len=1e-2,  # type: ignore
+        )
 
         self.scene.set_ambient_light([0.5, 0.5, 0.5])
         self.scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5])
