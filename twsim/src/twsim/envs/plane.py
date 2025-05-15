@@ -83,6 +83,9 @@ class Plane(BaseEnv):
     def _load_scene(self, options: dict):
         "Construct the scene ManiSkill will automatically create actors in every sub-scene)."
 
+        self.scene.set_ambient_light([0.5, 0.5, 0.5])
+        self.scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5])
+
         # scene: ManiSkillScene,
         # floor_width: int = 100,
         # floor_length: int = None,
@@ -99,18 +102,6 @@ class Plane(BaseEnv):
             floor_length=2,
             texture_square_len=1,
         )
-
-        self.scene.set_ambient_light([0.5, 0.5, 0.5])
-        self.scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5])
-
-        plane_half_size = (10, 1.5e-1, 1e-2)
-        plane_color = (0.2, 0.2, 0.2)
-
-        builder = self.scene.create_actor_builder()
-        builder.initial_pose = sapien.Pose(p=[3e-1, 0, 0], q=[1, 0, 0, 0])  # type: ignore
-        builder.add_box_collision(half_size=plane_half_size)
-        builder.add_box_visual(half_size=plane_half_size, material=plane_color)
-        builder.build_static(name="ground-plane")
 
     # @property
     # def _default_sensor_configs(self):
