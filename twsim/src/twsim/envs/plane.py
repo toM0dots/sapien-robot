@@ -95,9 +95,9 @@ class Plane(BaseEnv):
         # add_collision=True,
         self.ground = build_ground(
             self.scene,
-            floor_width=10,
-            floor_length=15e-2,  # type: ignore
-            texture_square_len=1e-2,  # type: ignore
+            floor_width=2,
+            floor_length=2,
+            texture_square_len=1,
         )
 
         self.scene.set_ambient_light([0.5, 0.5, 0.5])
