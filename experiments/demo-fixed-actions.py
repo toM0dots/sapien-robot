@@ -33,37 +33,23 @@ if args.video:
 
 normalized_speed = 0.2
 forward = torch.ones(4) * normalized_speed
+rotate_left = torch.tensor([1, 1, 0, 0]) * normalized_speed
 
-normalized_extension = -0.8
-extensions = torch.ones(4) * normalized_extension
+extensions_0p = torch.zeros(4)
+extensions_10p = torch.ones(4) * -0.8
+extensions_50p = torch.ones(4) * 0.0
 
 # TODO: set more explicit values
 action_sequence = [
-    # torch.zeros_like(env.action_space.sample())
-    torch.cat((forward, extensions)),
-    torch.cat((forward, extensions)),
-    torch.cat((forward, extensions)),
-    torch.cat((forward, extensions)),
-    # [62.825, 62.825, 62.825, 62.825, 0.0, 0.0, 0.0, 0.0],
-    # [62.825, -62.825, 62.825, -62.825, 0.0, 0.0, 0.0, 0.0],
-    # [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0],
-    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-    # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
-    # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
-    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-    # [62.825, 62.825, 62.825, 62.825, 0.0, 1.0, 2.0, 3.0],
-    # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
-    # [62.825, 62.825, 62.825, 62.825, 2.0, 2.0, 2.0, 2.0],
-    # [62.825, 62.825, 62.825, 24, 2.0, 2.0, 2.0, 2.0],
+    torch.cat((forward, extensions_10p)),
+    torch.cat((rotate_left, extensions_0p)),
+    torch.cat((forward, extensions_10p)),
+    torch.cat((forward, extensions_50p)),
 ]
 
 obs, _ = env.reset(seed=0)
 
-num_steps_per_action = 25
+num_steps_per_action = 50
 max_steps = 500
 
 for stepi in range(max_steps):
