@@ -52,11 +52,18 @@ obs, _ = env.reset(seed=0)
 num_steps_per_action = 50
 max_steps = 500
 
+action_index = 0
+
 for stepi in range(max_steps):
-    action_index = int(stepi / num_steps_per_action)
-    if action_index >= len(action_sequence):
+    new_action_index = int(stepi / num_steps_per_action)
+    if new_action_index >= len(action_sequence):
         break
 
+    if new_action_index != action_index:
+        print(f"Step {stepi}: action {action_index} of {len(action_sequence)}")
+        new_action_index = action_index
+
+    action_index = new_action_index
     action = action_sequence[action_index]
 
     obs, reward, terminated, truncated, info = env.step(action)

@@ -243,7 +243,7 @@ class Plane(BaseEnv):
         self.distance_prev = distance
 
         reward = torch.ones(self.num_envs) * moving_forward
-        print(f"{reward=}")
+        # print(f"{reward=}")
         # print(f"{reward.shape=}")
 
         return reward.to(device=self.device)
