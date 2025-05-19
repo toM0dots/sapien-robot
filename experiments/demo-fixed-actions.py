@@ -34,7 +34,7 @@ if args.video:
 normalized_speed = 0.2
 forward = torch.ones(4) * normalized_speed
 
-normalized_extension = -0.8
+normalized_extension = 0.0
 extensions = torch.ones(4) * normalized_extension
 
 # TODO: set more explicit values
