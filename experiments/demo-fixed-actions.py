@@ -27,7 +27,12 @@ args = parser.parse_args()
 env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
 
 if args.video:
-    env = RecordEpisode(env, output_dir="./recorded", save_trajectory=False)  # type: ignore
+    env = RecordEpisode(
+        env,  # type: ignore
+        output_dir="./videos",
+        save_trajectory=False,
+        max_steps_per_video=500,
+    )
 
 env.unwrapped.print_sim_details()  # type: ignore
 print(f"{env.unwrapped.reward_mode=}")  # type: ignore
