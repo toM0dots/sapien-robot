@@ -71,7 +71,7 @@ for stepi in range(max_steps):
     action = action_sequence[action_index]
 
     obs, reward, terminated, truncated, info = env.step(action)
-
+    
     if args.video:
         recorder.capture_image(env.render())
 
