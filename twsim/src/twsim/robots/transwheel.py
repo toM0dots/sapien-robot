@@ -265,6 +265,9 @@ class TransWheel(BaseAgent):
         # Override the default set_action method so that we can expand back to the
         # correct number of controllers.
 
+        print(f"{self.scene.num_envs=}")
+        print(f"{action.shape=}")
+
         if not self.scene.gpu_sim_enabled:
             if torch.isnan(action).any():
                 raise ValueError("Action cannot be NaN. Received:", action)
