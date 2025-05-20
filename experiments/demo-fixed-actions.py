@@ -6,15 +6,18 @@ This script is used to test the custom robot and environment without learning.
 Run with: python demo-fixed-actions.py
 """
 
+# TODO: unify demos so that they have the same arguments and setup
+# TODO: lookin into reply_trajectory
+
 from argparse import ArgumentParser
 
 import gymnasium as gym
 import torch
+from mani_skill.utils.wrappers.record import RecordEpisode
 
 # Disable import warnings since gymnasium imports are based on strings
 from twsim.envs import plane  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
-from twsim.utils import RobotRecorder
 
 parser = ArgumentParser(description="Fixed action sequence demo.")
 parser.add_argument("--num_envs", type=int, default=1, help="Number of environments.")
@@ -23,13 +26,11 @@ args = parser.parse_args()
 
 env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
 
+if args.video:
+    env = RecordEpisode(env, output_dir="./recorded", save_trajectory=False)  # type: ignore
+
 env.unwrapped.print_sim_details()  # type: ignore
 print(f"{env.unwrapped.reward_mode=}")  # type: ignore
-
-
-if args.video:
-    # TODO: recorder should take into account the number of envs
-    recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
 
 normalized_speed = 0.2
 still = torch.zeros(4)
@@ -71,9 +72,6 @@ for stepi in range(max_steps):
     action = action_sequence[action_index]
 
     obs, reward, terminated, truncated, info = env.step(action)
-    
-    if args.video:
-        recorder.capture_image(env.render())
 
     # done = terminated or truncated
     # if done:
@@ -81,6 +79,3 @@ for stepi in range(max_steps):
 
 
 env.close()
-
-if args.video:
-    recorder.save_as_video(args.video, overwrite=True)
