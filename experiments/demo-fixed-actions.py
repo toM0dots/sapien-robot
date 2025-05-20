@@ -29,7 +29,7 @@ env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
 if args.video:
     env = RecordEpisode(
         env,  # type: ignore
-        output_dir="./videos",
+        output_dir="./",
         save_trajectory=False,
         info_on_video=True,
         max_steps_per_video=500,
