@@ -24,7 +24,9 @@ parser.add_argument("--num_envs", type=int, default=1, help="Number of environme
 parser.add_argument("--video", action="store_true", help="Output a video.")
 args = parser.parse_args()
 
-env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
+n_envs = args.num_envs
+
+env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=n_envs)
 
 if args.video:
     env = RecordEpisode(
@@ -39,13 +41,13 @@ env.unwrapped.print_sim_details()  # type: ignore
 print(f"{env.unwrapped.reward_mode=}")  # type: ignore
 
 normalized_speed = 0.2
-still = torch.zeros(4)
-forward = torch.ones(4) * normalized_speed
-rotate_left = torch.tensor([1, 1, -1, -1]) * normalized_speed
+still = torch.zeros(n_envs, 4)
+forward = torch.ones(n_envs, 4) * normalized_speed
+rotate_left = torch.tensor([[1, 1, -1, -1]] * n_envs) * normalized_speed
 
-extensions_0p = torch.ones(4) * -1
-extensions_10p = torch.ones(4) * -0.8
-extensions_50p = torch.ones(4) * 0.0
+extensions_0p = torch.ones(n_envs, 4) * -1
+extensions_10p = torch.ones(n_envs, 4) * -0.8
+extensions_50p = torch.ones(n_envs, 4) * 0.0
 
 action_sequence = [
     torch.cat((still, extensions_10p)),
