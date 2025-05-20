@@ -32,18 +32,23 @@ if args.video:
     recorder = RobotRecorder(output_dir="./output_images", fps=30, overwrite=True)
 
 normalized_speed = 0.2
+still = torch.zeros(4)
 forward = torch.ones(4) * normalized_speed
-rotate_left = torch.tensor([1, 1, 0, 0]) * normalized_speed
+rotate_left = torch.tensor([1, 1, -1, -1]) * normalized_speed
 
-extensions_0p = torch.zeros(4)
+extensions_0p = torch.ones(4) * -1
 extensions_10p = torch.ones(4) * -0.8
 extensions_50p = torch.ones(4) * 0.0
 
 # TODO: set more explicit values
 action_sequence = [
+    torch.cat((still, extensions_10p)),
     torch.cat((forward, extensions_10p)),
+    torch.cat((still, extensions_0p)),
     torch.cat((rotate_left, extensions_0p)),
+    torch.cat((still, extensions_10p)),
     torch.cat((forward, extensions_10p)),
+    torch.cat((still, extensions_50p)),
     torch.cat((forward, extensions_50p)),
 ]
 
@@ -52,28 +57,27 @@ obs, _ = env.reset(seed=0)
 num_steps_per_action = 50
 max_steps = 500
 
-action_index = 0
+old_action_index = -1
 
 for stepi in range(max_steps):
-    new_action_index = int(stepi / num_steps_per_action)
-    if new_action_index >= len(action_sequence):
+    action_index = int(stepi / num_steps_per_action)
+    if action_index >= len(action_sequence):
         break
 
-    if new_action_index != action_index:
-        print(f"Step {stepi}: action {action_index} of {len(action_sequence)}")
-        new_action_index = action_index
+    if action_index != old_action_index:
+        print(f"Step {stepi}: action {action_index + 1} of {len(action_sequence)}")
+        old_action_index = action_index
 
-    action_index = new_action_index
     action = action_sequence[action_index]
 
     obs, reward, terminated, truncated, info = env.step(action)
-
+    
     if args.video:
         recorder.capture_image(env.render())
 
-    done = terminated or truncated
-    if done:
-        break
+    # done = terminated or truncated
+    # if done:
+    #     break
 
 
 env.close()
