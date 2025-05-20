@@ -21,7 +21,7 @@ from twsim.robots import transwheel  # noqa: F401
 
 parser = ArgumentParser(description="Fixed action sequence demo.")
 parser.add_argument("--num_envs", type=int, default=1, help="Number of environments.")
-parser.add_argument("--video", type=str, help="Output a video.")
+parser.add_argument("--video", action="store_true", help="Output a video.")
 args = parser.parse_args()
 
 env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
