@@ -31,6 +31,7 @@ if args.video:
         env,  # type: ignore
         output_dir="./videos",
         save_trajectory=False,
+        info_on_video=True,
         max_steps_per_video=500,
     )
 
@@ -46,7 +47,6 @@ extensions_0p = torch.ones(4) * -1
 extensions_10p = torch.ones(4) * -0.8
 extensions_50p = torch.ones(4) * 0.0
 
-# TODO: set more explicit values
 action_sequence = [
     torch.cat((still, extensions_10p)),
     torch.cat((forward, extensions_10p)),
