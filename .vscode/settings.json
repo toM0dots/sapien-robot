@@ -1,19 +1,21 @@
 {
-    "cSpell.words": [
-        "fourcc",
-        "fromarray",
-        "imread",
-        "imwrite",
-        "linalg",
-        "physx",
-        "qpos",
-        "qvel",
-        "sapien",
-        "setuptools",
-        "stepi",
-        "timestep",
-        "transwheel",
-        "twsim",
-        "uids"
-    ]
+  "cSpell.words": [
+    "fourcc",
+    "fromarray",
+    "imread",
+    "imwrite",
+    "linalg",
+    "MJCF",
+    "physx",
+    "qpos",
+    "qvel",
+    "sapien",
+    "setuptools",
+    "stepi",
+    "timestep",
+    "transwheel",
+    "twsim",
+    "uids",
+    "URDF"
+  ]
 }
