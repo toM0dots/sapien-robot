@@ -50,6 +50,7 @@ if args.video:
 
 env.unwrapped.print_sim_details()  # type: ignore
 print(f"{env.unwrapped.reward_mode=}")  # type: ignore
+print("-" * 32)
 
 normalized_speed = 0.2
 still = torch.zeros(num_envs, 4)
@@ -78,6 +79,8 @@ max_steps = 500
 
 old_action_index = -1
 
+print("Starting demo with fixed actions...")
+
 for stepi in range(max_steps):
     action_index = int(stepi / num_steps_per_action)
     if action_index >= len(action_sequence):
@@ -97,3 +100,5 @@ for stepi in range(max_steps):
 
 
 env.close()
+
+print("Demo finished.")
