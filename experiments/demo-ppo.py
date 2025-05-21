@@ -35,7 +35,7 @@ class Args:
     track: bool = False                    # Track with Wandb
     wandb_project_name: str = "ManiSkill"  # Wandb project name
     wandb_entity: str | None = None        # Wandb entity name
-    capture_video: bool = True             # Save videos to ./videos
+    capture_video: bool = True             # Save videos to ./runs/{run_name}/videos
     save_model: bool = True                # Save model ./runs/{run_name}
     evaluate: bool = False                 # Only evaluate and save trajectories
     checkpoint: str | None = None          # Path to pretrained checkpoint for initialization
@@ -140,6 +140,7 @@ class Logger:
 
     def add_scalar(self, tag, scalar_value, step):
         if self.log_wandb:
+            raise NotImplementedError("Wandb tracking is not implemented yet.")
             wandb.log({tag: scalar_value}, step=step)
         if self.writer:
             self.writer.add_scalar(tag, scalar_value, step)
@@ -150,89 +151,130 @@ class Logger:
 
 
 if __name__ == "__main__":
+    "Run PPO on a ManiSkill environment."
+
+    #
+    #  Parse arguments
+    #
+
     args = tyro.cli(Args)
+
+    # Compute derived arguments
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
+
     if args.exp_name is None:
         args.exp_name = os.path.basename(__file__)[: -len(".py")]
         run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
     else:
         run_name = args.exp_name
 
-    # TRY NOT TO MODIFY: seeding
+    #
+    # Configure and create the environment
+    #
+
+    # NOTE: do not modify {
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = args.torch_deterministic
+    # NOTE: do not modify }
 
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
-    # env setup
     env_kwargs = dict(obs_mode="state", render_mode="rgb_array", sim_backend="physx_cuda")
+
     if args.control_mode is not None:
         env_kwargs["control_mode"] = args.control_mode
+
+    # Create the training environment
     envs = gym.make(
         args.env_id,
         num_envs=args.num_envs if not args.evaluate else 1,
         reconfiguration_freq=args.reconfiguration_freq,
-        **env_kwargs,
+        **env_kwargs,  # type: ignore
     )
+
+    # Create the evaluation environment
     eval_envs = gym.make(
         args.env_id,
         num_envs=args.num_eval_envs,
         reconfiguration_freq=args.eval_reconfiguration_freq,
-        **env_kwargs,
+        **env_kwargs,  # type: ignore
     )
+
+    # Flatten action spaces if needed
     if isinstance(envs.action_space, gym.spaces.Dict):
         envs = FlattenActionSpaceWrapper(envs)
         eval_envs = FlattenActionSpaceWrapper(eval_envs)
+
+    #
+    # Setup recording wrappers
+    #
+
     if args.capture_video:
-        eval_output_dir = f"runs/{run_name}/videos"
-        if args.evaluate:
-            eval_output_dir = f"{os.path.dirname(args.checkpoint)}/test_videos"
-        print(f"Saving eval videos to {eval_output_dir}")
-        if args.save_train_video_freq is not None:
-            save_video_trigger = (
-                lambda x: (x // args.num_steps) % args.save_train_video_freq == 0
-            )
+        if args.save_train_video_freq:
+
+            def save_video_trigger(x):
+                return (x // args.num_steps) % args.save_train_video_freq == 0
+
             envs = RecordEpisode(
-                envs,
+                envs,  # type: ignore
                 output_dir=f"runs/{run_name}/train_videos",
                 save_trajectory=False,
                 save_video_trigger=save_video_trigger,
                 max_steps_per_video=args.num_steps,
                 video_fps=30,
             )
+
+        eval_output_dir = f"runs/{run_name}/videos"
+        if args.evaluate:
+            if not args.checkpoint:
+                raise ValueError("Checkpoint must be provided for evaluation.")
+            eval_output_dir = f"{os.path.dirname(args.checkpoint)}/test_videos"
+
+        print(f"Saving eval videos to {eval_output_dir}")
+
         eval_envs = RecordEpisode(
-            eval_envs,
+            eval_envs,  # type: ignore
             output_dir=eval_output_dir,
             save_trajectory=args.evaluate,
             trajectory_name="trajectory",
             max_steps_per_video=args.num_eval_steps,
             video_fps=30,
         )
+
+    #
+    # Setup vectorized environments wrappers
+    #
+
     envs = ManiSkillVectorEnv(
-        envs,
+        envs,  # type: ignore
         args.num_envs,
         ignore_terminations=not args.partial_reset,
         record_metrics=True,
     )
+
     eval_envs = ManiSkillVectorEnv(
-        eval_envs,
+        eval_envs,  # type: ignore
         args.num_eval_envs,
         ignore_terminations=not args.eval_partial_reset,
         record_metrics=True,
     )
-    assert isinstance(envs.single_action_space, gym.spaces.Box), (
-        "only continuous action space is supported"
-    )
+
+    action_space_is_continuous = isinstance(envs.single_action_space, gym.spaces.Box)
+    assert action_space_is_continuous, "Only continuous action spaces are supported"
 
     max_episode_steps = gym_utils.find_max_episode_steps_value(envs._env)
     logger = None
+
     if not args.evaluate:
         print("Running training")
+
         if args.track:
+            raise NotImplementedError("Wandb tracking is not implemented yet.")
+
             import wandb
 
             config = vars(args)
@@ -262,103 +304,115 @@ if __name__ == "__main__":
                 group="PPO",
                 tags=["ppo", "walltime_efficient"],
             )
+
         writer = SummaryWriter(f"runs/{run_name}")
-        writer.add_text(
-            "hyperparameters",
-            "|param|value|\n|-|-|\n%s"
-            % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
-        )
+
+        table_header = "|param|value|\n|-|-|"
+        table_body = "\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])
+        writer.add_text("hyperparameters", f"{table_header}\n{table_body}")
+
         logger = Logger(log_wandb=args.track, tensorboard=writer)
+
     else:
-        print("Running evaluation")
+        print("Running evaluation only")
+
+    #
+    # Algorithm storage space
+    #
+
+    experiment_shape = (args.num_steps, args.num_envs)
+
+    obs = torch.zeros(experiment_shape + envs.single_observation_space.shape).to(device)  # type: ignore
+    actions = torch.zeros(experiment_shape + envs.single_action_space.shape).to(device)  # type: ignore
+    logprobs = torch.zeros(experiment_shape).to(device)
+    rewards = torch.zeros(experiment_shape).to(device)
+    dones = torch.zeros(experiment_shape).to(device)
+    values = torch.zeros(experiment_shape).to(device)
+
+    #
+    # Setup the agent and optimizer
+    #
 
     agent = Agent(envs).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
-    # ALGO Logic: Storage setup
-    obs = torch.zeros(
-        (args.num_steps, args.num_envs) + envs.single_observation_space.shape
-    ).to(device)
-    actions = torch.zeros(
-        (args.num_steps, args.num_envs) + envs.single_action_space.shape
-    ).to(device)
-    logprobs = torch.zeros((args.num_steps, args.num_envs)).to(device)
-    rewards = torch.zeros((args.num_steps, args.num_envs)).to(device)
-    dones = torch.zeros((args.num_steps, args.num_envs)).to(device)
-    values = torch.zeros((args.num_steps, args.num_envs)).to(device)
+    #
+    # Start training
+    #
 
-    # TRY NOT TO MODIFY: start the game
+    # NOTE: do not modify
     global_step = 0
     start_time = time.time()
     next_obs, _ = envs.reset(seed=args.seed)
     eval_obs, _ = eval_envs.reset(seed=args.seed)
     next_done = torch.zeros(args.num_envs, device=device)
-    print(f"####")
-    print(
-        f"args.num_iterations={args.num_iterations} args.num_envs={args.num_envs} args.num_eval_envs={args.num_eval_envs}"
-    )
-    print(
-        f"args.minibatch_size={args.minibatch_size} args.batch_size={args.batch_size} args.update_epochs={args.update_epochs}"
-    )
-    print(f"####")
+
+    print("####")
+    print(f"{args.num_iterations=} {args.num_envs=} {args.num_eval_envs=}")
+    print(f"{args.minibatch_size=} {args.batch_size=} {args.update_epochs=}")
+    print("####")
+
     action_space_low, action_space_high = (
-        torch.from_numpy(envs.single_action_space.low).to(device),
-        torch.from_numpy(envs.single_action_space.high).to(device),
+        torch.from_numpy(envs.single_action_space.low).to(device),  # type: ignore
+        torch.from_numpy(envs.single_action_space.high).to(device),  # type: ignore
     )
 
-    def clip_action(action: torch.Tensor):
+    def compute_clip_action(action: torch.Tensor):
         return torch.clamp(action.detach(), action_space_low, action_space_high)
 
     if args.checkpoint:
         agent.load_state_dict(torch.load(args.checkpoint))
 
     for iteration in range(1, args.num_iterations + 1):
-        print(f"Epoch: {iteration}, global_step={global_step}")
+        print(f"Epoch: {iteration}, {global_step=}")
+
         final_values = torch.zeros((args.num_steps, args.num_envs), device=device)
         agent.eval()
+
         if iteration % args.eval_freq == 1:
             print("Evaluating")
+
             eval_obs, _ = eval_envs.reset()
             eval_metrics = defaultdict(list)
             num_episodes = 0
+
             for _ in range(args.num_eval_steps):
                 with torch.no_grad():
-                    (
-                        eval_obs,
-                        eval_rew,
-                        eval_terminations,
-                        eval_truncations,
-                        eval_infos,
-                    ) = eval_envs.step(agent.get_action(eval_obs, deterministic=True))
+                    eval_action = agent.get_action(eval_obs, deterministic=True)
+                    eval_obs, _, _, _, eval_infos = eval_envs.step(eval_action)
+
                     if "final_info" in eval_infos:
                         mask = eval_infos["_final_info"]
                         num_episodes += mask.sum()
                         for k, v in eval_infos["final_info"]["episode"].items():
                             eval_metrics[k].append(v)
-            print(
-                f"Evaluated {args.num_eval_steps * args.num_eval_envs} steps resulting in {num_episodes} episodes"
-            )
+
+            total_eval_steps = args.num_eval_steps * args.num_eval_envs
+            print(f"Evaluated {total_eval_steps} steps resulting in {num_episodes} episodes")
+
             for k, v in eval_metrics.items():
                 mean = torch.stack(v).float().mean()
                 if logger is not None:
                     logger.add_scalar(f"eval/{k}", mean, global_step)
                 print(f"eval_{k}_mean={mean}")
+
             if args.evaluate:
                 break
+
         if args.save_model and iteration % args.eval_freq == 1:
             model_path = f"runs/{run_name}/ckpt_{iteration}.pt"
             torch.save(agent.state_dict(), model_path)
             print(f"model saved to {model_path}")
-        # Annealing the rate if instructed to do so.
+
         if args.anneal_lr:
             frac = 1.0 - (iteration - 1.0) / args.num_iterations
-            lrnow = frac * args.learning_rate
-            optimizer.param_groups[0]["lr"] = lrnow
+            lr_now = frac * args.learning_rate
+            optimizer.param_groups[0]["lr"] = lr_now
 
         rollout_time = time.time()
         for step in range(0, args.num_steps):
             global_step += args.num_envs
-            obs[step] = next_obs
+            obs[step] = next_obs  # type: ignore
             dones[step] = next_done
 
             # ALGO LOGIC: action logic
@@ -369,38 +423,42 @@ if __name__ == "__main__":
             logprobs[step] = logprob
 
             # TRY NOT TO MODIFY: execute the game and log data.
-            next_obs, reward, terminations, truncations, infos = envs.step(
-                clip_action(action)
-            )
-            next_done = torch.logical_or(terminations, truncations).to(torch.float32)
-            rewards[step] = reward.view(-1) * args.reward_scale
+            clip_action = compute_clip_action(action)
+            next_obs, reward, terminations, truncations, infos = envs.step(clip_action)
+            next_done = torch.logical_or(terminations, truncations).to(torch.float32)  # type: ignore
+            rewards[step] = reward.view(-1) * args.reward_scale  # type: ignore
 
             if "final_info" in infos:
                 final_info = infos["final_info"]
                 done_mask = infos["_final_info"]
+
                 for k, v in final_info["episode"].items():
-                    logger.add_scalar(f"train/{k}", v[done_mask].float().mean(), global_step)
+                    logger.add_scalar(f"train/{k}", v[done_mask].float().mean(), global_step)  # type: ignore
+
                 with torch.no_grad():
-                    final_values[
-                        step, torch.arange(args.num_envs, device=device)[done_mask]
-                    ] = agent.get_value(infos["final_observation"][done_mask]).view(-1)
+                    final_obs = agent.get_value(infos["final_observation"][done_mask])
+                    done_mask_indices = torch.arange(args.num_envs, device=device)[done_mask]
+                    final_values[step, done_mask_indices] = final_obs.view(-1)
+
         rollout_time = time.time() - rollout_time
+
         # bootstrap value according to termination and truncation
         with torch.no_grad():
             next_value = agent.get_value(next_obs).reshape(1, -1)
             advantages = torch.zeros_like(rewards).to(device)
-            lastgaelam = 0
+            last_gae_lam = 0
             for t in reversed(range(args.num_steps)):
                 if t == args.num_steps - 1:
                     next_not_done = 1.0 - next_done
-                    nextvalues = next_value
+                    next_values = next_value
                 else:
                     next_not_done = 1.0 - dones[t + 1]
-                    nextvalues = values[t + 1]
-                real_next_values = (
-                    next_not_done * nextvalues + final_values[t]
-                )  # t instead of t+1
-                # next_not_done means nextvalues is computed from the correct next_obs
+                    next_values = values[t + 1]
+
+                # t instead of t+1
+                real_next_values = next_not_done * next_values + final_values[t]
+
+                # next_not_done means next_values is computed from the correct next_obs
                 # if next_not_done is 1, final_values is always 0
                 # if next_not_done is 0, then use final_values, which is computed according to bootstrap_at_done
                 if args.finite_horizon_gae:
@@ -435,8 +493,8 @@ if __name__ == "__main__":
                     ) / lam_coef_sum - values[t]
                 else:
                     delta = rewards[t] + args.gamma * real_next_values - values[t]
-                    advantages[t] = lastgaelam = (
-                        delta + args.gamma * args.gae_lambda * next_not_done * lastgaelam
+                    advantages[t] = last_gae_lam = (
+                        delta + args.gamma * args.gae_lambda * next_not_done * last_gae_lam
                     )  # Here actually we should use next_not_terminated, but we don't have lastgamlam if terminated
             returns = advantages + values
 

@@ -1,6 +1,7 @@
 {
   "cSpell.words": [
     "cudnn",
+    "dones",
     "fourcc",
     "fromarray",
     "imread",
@@ -22,6 +23,7 @@
     "twsim",
     "uids",
     "URDF",
-    "vloss"
+    "vloss",
+    "walltime"
   ]
 }
