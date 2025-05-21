@@ -4,6 +4,7 @@
     "dones",
     "fourcc",
     "fromarray",
+    "gymtest",
     "imread",
     "imwrite",
     "linalg",
