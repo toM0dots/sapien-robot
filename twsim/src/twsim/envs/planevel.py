@@ -18,7 +18,7 @@ from mani_skill.utils.building.ground import build_ground
 from mani_skill.utils.registration import register_env
 from mani_skill.utils.structs.types import GPUMemoryConfig, SimConfig
 
-from twsim.robots.transwheel import TransWheel
+from twsim.robots.transwheel import TransWheel, num_extensions
 
 
 # TODO: set a reasonable number of max episode steps
@@ -210,9 +210,9 @@ class PlaneVel(BaseEnv):
         self.chassis_lin_vel_prev = chassis_lin_vel
 
         return dict(
-            orientation=chassis_orientation,
-            angular_velocity=chassis_angular_velocity,
-            linear_acceleration=chassis_linear_acceleration,
+            orientation=chassis_orientation,  # (N, 4)
+            angular_velocity=chassis_angular_velocity,  # (N, 3)
+            linear_acceleration=chassis_linear_acceleration,  # (N, 3)
         )
 
     def compute_dense_reward(self, obs, action: torch.Tensor, info: dict):
@@ -239,11 +239,10 @@ class PlaneVel(BaseEnv):
 
         # NOTE: assuming normalized extension positions are between -1 (closed) and 1 (fully extended)
         # NOTE: distance is always positive, so, tanh will increase to 1 as distance decreases
-        print(f"{obs=}")
-        print(f"{obs.shape=}")
-        extension_amount = obs["extension_positions"]
+        extension_amount = obs[4:8]
         extension_amount += 1.0
         print(f"{extension_amount=}")
+        print(f"{extension_amount.shape=}")
         reward += 1 - torch.tanh(5 * extension_amount)
         self.max_reward += 1
 
