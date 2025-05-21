@@ -80,9 +80,9 @@ for stepi in range(max_steps):
 
     obs, reward, terminated, truncated, info = env.step(action)
 
+    # No need to check this condition when running a sequence
     # done = terminated or truncated
-    # if done:
-    #     break
+    # if done: break
 
 
 env.close()
