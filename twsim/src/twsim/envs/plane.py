@@ -192,7 +192,7 @@ class Plane(BaseEnv):
         return {"success": success, "fail": fail}
 
     def _get_obs_extra(self, info: dict):
-        "TODO"
+        "Additional observation data for the task."
         # should return an dict of additional observation data for your tasks
         # this will be included as part of the observation in the "extra" key when obs_mode="state_dict" or any of the visual obs_modes
         # and included as part of a flattened observation when obs_mode="state". Moreover, you have access to the info object
