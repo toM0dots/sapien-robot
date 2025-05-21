@@ -155,9 +155,13 @@ class PlaneVel(BaseEnv):
 
     def compute_velocity_error(self) -> torch.Tensor:
         "(Batched) Return the difference between the robot's velocity and the target velocity."
-        robot_velocity = self.agent.robot.get_pose().get_q()
+        robot_velocity = self.agent.robot.get_root_linear_velocity()
+        print(f"{robot_velocity=}")
+        print(f"{self.target_velocity=}")
         velocity_diff = robot_velocity - self.target_velocity
+        print(f"{velocity_diff=}")
         velocity_error = torch.linalg.norm(velocity_diff, dim=1)
+        print(f"{velocity_error=}")
         return velocity_error
 
     def evaluate(self):

@@ -16,10 +16,7 @@ import torch
 import tyro
 from mani_skill.utils.wrappers.record import RecordEpisode
 
-from twsim import envs
-
-# Disable import warnings since gymnasium imports are based on strings
-# from twsim.envs import plane  # noqa: F401
+from twsim import envs  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
 
 
