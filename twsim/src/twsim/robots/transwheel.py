@@ -346,6 +346,8 @@ class TransWheel(BaseAgent):
         #     obs = dict(qpos=self.robot.get_qpos(), qvel=self.robot.get_qvel())
         # We only need a subset of the data
         wheel_vel = self.robot.get_qvel()[..., :4]
+        print(f"{wheel_vel=}")
         extension_pos = self.robot.get_qpos()[..., 4::num_extensions]
+        print(f"{extension_pos=}")
 
         return dict(wheel_velocities=wheel_vel, extension_positions=extension_pos)
