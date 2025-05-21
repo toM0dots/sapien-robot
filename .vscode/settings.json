@@ -1,10 +1,14 @@
 {
   "cSpell.words": [
+    "cudnn",
     "fourcc",
     "fromarray",
     "imread",
     "imwrite",
     "linalg",
+    "logstd",
+    "minibatch",
+    "minibatches",
     "MJCF",
     "physx",
     "qpos",
@@ -13,9 +17,11 @@
     "setuptools",
     "stepi",
     "timestep",
+    "timesteps",
     "transwheel",
     "twsim",
     "uids",
-    "URDF"
+    "URDF",
+    "vloss"
   ]
 }
