@@ -35,9 +35,7 @@ class Plane(BaseEnv):
     SUPPORTED_ROBOTS = ["transwheel"]
     agent: TransWheel
 
-    def __init__(
-        self, *args, robot_uids="transwheel", robot_init_qpos_noise=0.02, **kwargs
-    ):
+    def __init__(self, *args, robot_uids="transwheel", robot_init_qpos_noise=0.02, **kwargs):
         # TODO: initial position noise is not used
         self.robot_init_qpos_noise = robot_init_qpos_noise
 
