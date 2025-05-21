@@ -42,7 +42,7 @@ class Args:
 
     # Algorithm specific arguments
     env_id: str = "PickCube-v1"                    # Environment ID
-    total_timesteps: int = 10000000                # Total number of time steps for training
+    total_timesteps: int = 10_000_000              # Total number of time steps for training
     learning_rate: float = 3e-4                    # Optimizer learning rate
     num_envs: int = 512                            # Number of parallel environments
     num_eval_envs: int = 8                         # Number of parallel evaluation environments
