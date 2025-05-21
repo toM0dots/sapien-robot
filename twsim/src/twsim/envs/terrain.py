@@ -72,6 +72,13 @@ class TerrainEnv(BaseEnv):
         builder.add_box_visual(half_size=half_size, material=[0.4, 0.2, 0.4])
         box = builder.build_static(name="wall2")
 
+        # load from urdf files
+        # loader = self.scene.create_urdf_loader()
+        # loader.add_package_path("terrain", "/code/sapien-poc/basic_rl/terrain/")  
+        # parsed = loader.parse("code/sapien-poc/basic_rl/terrain/terrain.urdf")
+        # builder = parsed["articulation_builders"][0]
+        # builder.build_static(name="terrain")
+        
         # half_size = [1e-2, 1e-2, 1e-2]
         # builder = self.scene.create_actor_builder()
         # builder.initial_pose = sapien.Pose(p=self.TARGET_POSE, q=[1, 0, 0, 0])

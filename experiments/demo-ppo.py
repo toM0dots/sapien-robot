@@ -251,14 +251,14 @@ if __name__ == "__main__":
 
     envs = ManiSkillVectorEnv(
         envs,  # type: ignore
-        args.num_envs,
+        # args.num_envs,
         ignore_terminations=not args.partial_reset,
         record_metrics=True,
     )
 
     eval_envs = ManiSkillVectorEnv(
         eval_envs,  # type: ignore
-        args.num_eval_envs,
+        # args.num_eval_envs,
         ignore_terminations=not args.eval_partial_reset,
         record_metrics=True,
     )
