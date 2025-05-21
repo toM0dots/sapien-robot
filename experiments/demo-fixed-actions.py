@@ -24,7 +24,9 @@ parser.add_argument("--num_envs", type=int, default=1, help="Number of environme
 parser.add_argument("--video", action="store_true", help="Output a video.")
 args = parser.parse_args()
 
-env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=args.num_envs)
+num_envs = args.num_envs
+
+env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=num_envs)
 
 if args.video:
     env = RecordEpisode(
@@ -39,23 +41,23 @@ env.unwrapped.print_sim_details()  # type: ignore
 print(f"{env.unwrapped.reward_mode=}")  # type: ignore
 
 normalized_speed = 0.2
-still = torch.zeros(4)
-forward = torch.ones(4) * normalized_speed
-rotate_left = torch.tensor([1, 1, -1, -1]) * normalized_speed
+still = torch.zeros(num_envs, 4)
+forward = torch.ones(num_envs, 4) * normalized_speed
+rotate_left = torch.tensor([[1, 1, -1, -1]] * num_envs) * normalized_speed
 
-extensions_0p = torch.ones(4) * -1
-extensions_10p = torch.ones(4) * -0.8
-extensions_50p = torch.ones(4) * 0.0
+extensions_0p = torch.ones(num_envs, 4) * -1
+extensions_10p = torch.ones(num_envs, 4) * -0.8
+extensions_50p = torch.ones(num_envs, 4) * 0.0
 
 action_sequence = [
-    torch.cat((still, extensions_10p)),
-    torch.cat((forward, extensions_10p)),
-    torch.cat((still, extensions_0p)),
-    torch.cat((rotate_left, extensions_0p)),
-    torch.cat((still, extensions_10p)),
-    torch.cat((forward, extensions_10p)),
-    torch.cat((still, extensions_50p)),
-    torch.cat((forward, extensions_50p)),
+    torch.cat((still, extensions_10p), dim=-1),
+    torch.cat((forward, extensions_10p), dim=-1),
+    torch.cat((still, extensions_0p), dim=-1),
+    torch.cat((rotate_left, extensions_0p), dim=-1),
+    torch.cat((still, extensions_10p), dim=-1),
+    torch.cat((forward, extensions_10p), dim=-1),
+    torch.cat((still, extensions_50p), dim=-1),
+    torch.cat((forward, extensions_50p), dim=-1),
 ]
 
 obs, _ = env.reset(seed=0)
