@@ -16,8 +16,10 @@ import torch
 import tyro
 from mani_skill.utils.wrappers.record import RecordEpisode
 
+from twsim import envs
+
 # Disable import warnings since gymnasium imports are based on strings
-from twsim.envs import plane  # noqa: F401
+# from twsim.envs import plane  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
 
 
@@ -50,7 +52,7 @@ if args.video:
 
 env.unwrapped.print_sim_details()  # type: ignore
 print(f"{env.unwrapped.reward_mode=}")  # type: ignore
-print("-" * 32)
+print("# -------------------------------------------------------------------------- #")
 
 normalized_speed = 0.2
 still = torch.zeros(num_envs, 4)
