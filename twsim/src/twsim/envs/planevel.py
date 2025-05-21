@@ -231,6 +231,7 @@ class PlaneVel(BaseEnv):
         # NOTE: distance is always positive, so, tanh will increase to 1 as distance decreases
         velocity_error = self.compute_velocity_error()
         reward += 1 - torch.tanh(5 * velocity_error)
+        print(f"{reward=}")
         self.max_reward += 1
 
         #
@@ -239,11 +240,10 @@ class PlaneVel(BaseEnv):
 
         # NOTE: assuming normalized extension positions are between -1 (closed) and 1 (fully extended)
         # NOTE: distance is always positive, so, tanh will increase to 1 as distance decreases
-        extension_amount = obs[..., 4:8]
-        extension_amount += 1.0
-        print(f"{extension_amount=}")
-        print(f"{extension_amount.shape=}")
-        reward += 1 - torch.tanh(5 * extension_amount)
+        extension_amounts = obs[..., 4:8]
+        extension_amounts += 1.0
+        reward += 1 - torch.tanh(5 * extension_amounts.sum(dim=-1))
+        print(f"{reward=}")
         self.max_reward += 1
 
         return reward.to(device=self.device)
