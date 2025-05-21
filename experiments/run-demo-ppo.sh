@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 mamba activate gymtest
-python demo-ppo.py --env-id Plane-v1 --control-mode wheel_vel_ext_pos
+python demo-ppo.py --env-id PlaneVel --control-mode wheel_vel_ext_pos
 # --total-timesteps 1000 --num-envs 32
 
 # tensorboard --logdir runs --port 8438
