@@ -239,7 +239,7 @@ class PlaneVel(BaseEnv):
 
         # NOTE: assuming normalized extension positions are between -1 (closed) and 1 (fully extended)
         # NOTE: distance is always positive, so, tanh will increase to 1 as distance decreases
-        extension_amount = obs[4:8]
+        extension_amount = obs[..., 4:8]
         extension_amount += 1.0
         print(f"{extension_amount=}")
         print(f"{extension_amount.shape=}")
