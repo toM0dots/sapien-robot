@@ -7,26 +7,37 @@ Run with: python demo-fixed-actions.py
 """
 
 # TODO: unify demos so that they have the same arguments and setup
-# TODO: lookin into reply_trajectory
+# TODO: look into reply_trajectory
 
-from argparse import ArgumentParser
+from dataclasses import dataclass
 
 import gymnasium as gym
 import torch
+import tyro
 from mani_skill.utils.wrappers.record import RecordEpisode
 
 # Disable import warnings since gymnasium imports are based on strings
 from twsim.envs import plane  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
 
-parser = ArgumentParser(description="Fixed action sequence demo.")
-parser.add_argument("--num_envs", type=int, default=1, help="Number of environments.")
-parser.add_argument("--video", action="store_true", help="Output a video.")
-args = parser.parse_args()
 
+@dataclass
+class Args:
+    """Experiment configuration and arguments."""
+
+    # fmt: off
+
+    env_id: str = "Plane-v1"  # Environment ID
+    num_envs: int = 1         # Number of environments
+    video: bool = False       # Output a video
+
+    # fmt: on
+
+
+args = tyro.cli(Args)
 num_envs = args.num_envs
 
-env = gym.make("Plane-v1", render_mode="rgb_array", num_envs=num_envs)
+env = gym.make(args.env_id, render_mode="rgb_array", num_envs=num_envs)
 
 if args.video:
     env = RecordEpisode(
