@@ -3,7 +3,6 @@ import random
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Optional
 
 import gymnasium as gym
 import numpy as np
@@ -24,93 +23,58 @@ from twsim.robots import transwheel  # noqa: F401
 
 @dataclass
 class Args:
-    exp_name: Optional[str] = None
-    """the name of this experiment"""
-    seed: int = 1
-    """seed of the experiment"""
-    torch_deterministic: bool = True
-    """if toggled, `torch.backends.cudnn.deterministic=True`"""
-    cuda: bool = True
-    """if toggled, cuda will be enabled by default"""
-    track: bool = False
-    """if toggled, this experiment will be tracked with Weights and Biases"""
-    wandb_project_name: str = "ManiSkill"
-    """the wandb's project name"""
-    wandb_entity: Optional[str] = None
-    """the entity (team) of wandb's project"""
-    capture_video: bool = True
-    """whether to capture videos of the agent performances (check out `videos` folder)"""
-    save_model: bool = True
-    """whether to save model into the `runs/{run_name}` folder"""
-    evaluate: bool = False
-    """if toggled, only runs evaluation with the given model checkpoint and saves the evaluation trajectories"""
-    checkpoint: Optional[str] = None
-    """path to a pretrained checkpoint file to start evaluation/training from"""
+    """Experiment configuration and arguments."""
+
+    # fmt: off
+
+    # General configuration
+    exp_name: str | None = None            # Experiment name
+    seed: int = 1                          # Experiment seed
+    torch_deterministic: bool = True       # set `torch.backends.cudnn.deterministic=True`
+    cuda: bool = True                      # Enable CUDA by default
+    track: bool = False                    # Track with Wandb
+    wandb_project_name: str = "ManiSkill"  # Wandb project name
+    wandb_entity: str | None = None        # Wandb entity name
+    capture_video: bool = True             # Save videos to ./videos
+    save_model: bool = True                # Save model ./runs/{run_name}
+    evaluate: bool = False                 # Only evaluate and save trajectories
+    checkpoint: str | None = None          # Path to pretrained checkpoint for initialization
 
     # Algorithm specific arguments
-    env_id: str = "PickCube-v1"
-    """the id of the environment"""
-    total_timesteps: int = 10000000
-    """total timesteps of the experiments"""
-    learning_rate: float = 3e-4
-    """the learning rate of the optimizer"""
-    num_envs: int = 512
-    """the number of parallel environments"""
-    num_eval_envs: int = 8
-    """the number of parallel evaluation environments"""
-    partial_reset: bool = True
-    """whether to let parallel environments reset upon termination instead of truncation"""
-    eval_partial_reset: bool = False
-    """whether to let parallel evaluation environments reset upon termination instead of truncation"""
-    num_steps: int = 50
-    """the number of steps to run in each environment per policy rollout"""
-    num_eval_steps: int = 50
-    """the number of steps to run in each evaluation environment during evaluation"""
-    reconfiguration_freq: Optional[int] = None
-    """how often to reconfigure the environment during training"""
-    eval_reconfiguration_freq: Optional[int] = 1
-    """for benchmarking purposes we want to reconfigure the eval environment each reset to ensure objects are randomized in some tasks"""
-    control_mode: Optional[str] = "pd_joint_delta_pos"
-    """the control mode to use for the environment"""
-    anneal_lr: bool = False
-    """Toggle learning rate annealing for policy and value networks"""
-    gamma: float = 0.8
-    """the discount factor gamma"""
-    gae_lambda: float = 0.9
-    """the lambda for the general advantage estimation"""
-    num_minibatches: int = 32
-    """the number of mini-batches"""
-    update_epochs: int = 4
-    """the K epochs to update the policy"""
-    norm_adv: bool = True
-    """Toggles advantages normalization"""
-    clip_coef: float = 0.2
-    """the surrogate clipping coefficient"""
-    clip_vloss: bool = False
-    """Toggles whether or not to use a clipped loss for the value function, as per the paper."""
-    ent_coef: float = 0.0
-    """coefficient of the entropy"""
-    vf_coef: float = 0.5
-    """coefficient of the value function"""
-    max_grad_norm: float = 0.5
-    """the maximum norm for the gradient clipping"""
-    target_kl: float = 0.1
-    """the target KL divergence threshold"""
-    reward_scale: float = 1.0
-    """Scale the reward by this factor"""
-    eval_freq: int = 25
-    """evaluation frequency in terms of iterations"""
-    save_train_video_freq: Optional[int] = None
-    """frequency to save training videos in terms of iterations"""
-    finite_horizon_gae: bool = False
+    env_id: str = "PickCube-v1"                    # Environment ID
+    total_timesteps: int = 10000000                # Total number of time steps for training
+    learning_rate: float = 3e-4                    # Optimizer learning rate
+    num_envs: int = 512                            # Number of parallel environments
+    num_eval_envs: int = 8                         # Number of parallel evaluation environments
+    partial_reset: bool = True                     # Let parallel environments reset upon termination instead of truncation
+    eval_partial_reset: bool = False               # Let parallel evaluation environments reset upon termination instead of truncation
+    num_steps: int = 50                            # Number of steps to run in each environment per policy rollout
+    num_eval_steps: int = 50                       # Number of steps to run in each evaluation environment
+    reconfiguration_freq: int|None = None          # How often to reconfigure the environment during training
+    eval_reconfiguration_freq: int|None =  1       # Reconfigure the environment each reset to ensure objects are randomized
+    control_mode: str|None = "pd_joint_delta_pos"  # Control mode
+    anneal_lr: bool =  False                       # Toggle learning rate annealing for policy and value networks
+    gamma: float = 0.8                             # Discount factor gamma
+    gae_lambda: float = 0.9                        # Lambda for the general advantage estimation
+    num_minibatches: int = 32                      # Number of mini-batches
+    update_epochs: int = 4                         # K epochs to update the policy
+    norm_adv: bool = True                          # Toggle advantages normalization
+    clip_coef: float = 0.2                         # Surrogate clipping coefficient
+    clip_vloss: bool = False                       # Toggle clipped loss for the value function
+    ent_coef: float = 0.0                          # Coefficient of the entropy
+    vf_coef: float = 0.5                           # Coefficient of the value function
+    max_grad_norm: float = 0.5                     # Maximum norm for the gradient clipping
+    target_kl: float = 0.1                         # Target KL divergence threshold
+    reward_scale: float = 1.0                      # Scale the reward by this factor
+    eval_freq: int = 25                            # Evaluation frequency in terms of iterations
+    save_train_video_freq: int|None =  None        # Frequency to save training videos in terms of iterations )
+    finite_horizon_gae: bool = False               # Horizon for generalized advantage estimation
 
-    # to be filled in runtime
-    batch_size: int = 0
-    """the batch size (computed in runtime)"""
-    minibatch_size: int = 0
-    """the mini-batch size (computed in runtime)"""
-    num_iterations: int = 0
-    """the number of iterations (computed in runtime)"""
+    # Derived configurations
+    batch_size: int = 0     # Batch size (derived)
+    minibatch_size: int = 0 # Mini-batch size (derived)
+    num_iterations: int = 0 # Number of iterations (derived)
+    # fmt: on
 
 
 def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
@@ -122,10 +86,11 @@ def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
 class Agent(nn.Module):
     def __init__(self, envs):
         super().__init__()
+        observation_shape = envs.single_observation_space.shape
+        action_shape = envs.single_action_space.shape
+
         self.critic = nn.Sequential(
-            layer_init(
-                nn.Linear(np.array(envs.single_observation_space.shape).prod(), 256)
-            ),
+            layer_init(nn.Linear(np.array(observation_shape).prod(), 256)),
             nn.Tanh(),
             layer_init(nn.Linear(256, 256)),
             nn.Tanh(),
@@ -133,23 +98,18 @@ class Agent(nn.Module):
             nn.Tanh(),
             layer_init(nn.Linear(256, 1)),
         )
+
         self.actor_mean = nn.Sequential(
-            layer_init(
-                nn.Linear(np.array(envs.single_observation_space.shape).prod(), 256)
-            ),
+            layer_init(nn.Linear(np.array(observation_shape).prod(), 256)),
             nn.Tanh(),
             layer_init(nn.Linear(256, 256)),
             nn.Tanh(),
             layer_init(nn.Linear(256, 256)),
             nn.Tanh(),
-            layer_init(
-                nn.Linear(256, np.prod(envs.single_action_space.shape)),
-                std=0.01 * np.sqrt(2),
-            ),
+            layer_init(nn.Linear(256, np.prod(action_shape)), std=0.01 * np.sqrt(2)),
         )
-        self.actor_logstd = nn.Parameter(
-            torch.ones(1, np.prod(envs.single_action_space.shape)) * -0.5
-        )
+
+        self.actor_logstd = nn.Parameter(torch.ones(1, np.prod(action_shape)) * -0.5)
 
     def get_value(self, x):
         return self.critic(x)
@@ -170,26 +130,23 @@ class Agent(nn.Module):
         probs = Normal(action_mean, action_std)
         if action is None:
             action = probs.sample()
-        return (
-            action,
-            probs.log_prob(action).sum(1),
-            probs.entropy().sum(1),
-            self.critic(x),
-        )
+        return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), self.critic(x)
 
 
 class Logger:
-    def __init__(self, log_wandb=False, tensorboard: SummaryWriter = None) -> None:
+    def __init__(self, log_wandb=False, tensorboard: SummaryWriter | None = None) -> None:
         self.writer = tensorboard
         self.log_wandb = log_wandb
 
     def add_scalar(self, tag, scalar_value, step):
         if self.log_wandb:
             wandb.log({tag: scalar_value}, step=step)
-        self.writer.add_scalar(tag, scalar_value, step)
+        if self.writer:
+            self.writer.add_scalar(tag, scalar_value, step)
 
     def close(self):
-        self.writer.close()
+        if self.writer:
+            self.writer.close()
 
 
 if __name__ == "__main__":
@@ -212,9 +169,7 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    env_kwargs = dict(
-        obs_mode="state", render_mode="rgb_array", sim_backend="physx_cuda"
-    )
+    env_kwargs = dict(obs_mode="state", render_mode="rgb_array", sim_backend="physx_cuda")
     if args.control_mode is not None:
         env_kwargs["control_mode"] = args.control_mode
     envs = gym.make(
@@ -424,9 +379,7 @@ if __name__ == "__main__":
                 final_info = infos["final_info"]
                 done_mask = infos["_final_info"]
                 for k, v in final_info["episode"].items():
-                    logger.add_scalar(
-                        f"train/{k}", v[done_mask].float().mean(), global_step
-                    )
+                    logger.add_scalar(f"train/{k}", v[done_mask].float().mean(), global_step)
                 with torch.no_grad():
                     final_values[
                         step, torch.arange(args.num_envs, device=device)[done_mask]
@@ -483,8 +436,7 @@ if __name__ == "__main__":
                 else:
                     delta = rewards[t] + args.gamma * real_next_values - values[t]
                     advantages[t] = lastgaelam = (
-                        delta
-                        + args.gamma * args.gae_lambda * next_not_done * lastgaelam
+                        delta + args.gamma * args.gae_lambda * next_not_done * lastgaelam
                     )  # Here actually we should use next_not_terminated, but we don't have lastgamlam if terminated
             returns = advantages + values
 
