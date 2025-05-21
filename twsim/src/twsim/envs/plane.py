@@ -1,13 +1,10 @@
 """
 NOTE: The coordinate frame in Sapien is: x(forward), y(left), z(upward)
 
-TODO:
+TODO: consider the following methods
 - _default_sensor_configs
-- _default_human_render_camera_configs
 - _setup_sensors
 - _load_lighting
-- compute_dense_reward
-- compute_normalized_dense_reward
 - get_state_dict
 - set_state_dict
 """
