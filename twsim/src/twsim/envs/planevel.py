@@ -42,7 +42,7 @@ class PlaneVel(BaseEnv):
         # TODO: let user pass in target velocity
         # self.target_pose = sapien.Pose(p=[0.5, 0.5, 0.0], q=[1.0, 0.0, 0.0, 0.0])
         # self.target_radius = 0.05
-        self.target_velocity = torch.tensor([0.3, 0.0, 0.0], dtype=torch.float32)
+        self.target_velocity = torch.tensor([[0.3, 0.0, 0.0]], dtype=torch.float32)
 
         self.ground_threshold = -0.1
 
@@ -158,7 +158,7 @@ class PlaneVel(BaseEnv):
         robot_velocity = self.agent.robot.get_root_linear_velocity()
         print(f"{robot_velocity=}")
         print(f"{self.target_velocity=}")
-        velocity_diff = robot_velocity - self.target_velocity
+        velocity_diff = robot_velocity.cpu() - self.target_velocity
         print(f"{velocity_diff=}")
         velocity_error = torch.linalg.norm(velocity_diff, dim=1)
         print(f"{velocity_error=}")
@@ -243,7 +243,9 @@ class PlaneVel(BaseEnv):
 
         # NOTE: assuming normalized extension positions are between -1 (closed) and 1 (fully extended)
         # NOTE: distance is always positive, so, tanh will increase to 1 as distance decreases
-        extension_amount = obs["extension_positions"] + 1.0
+        extension_amount = obs["extension_positions"]
+        extension_amount += 1.0
+        print(f"{extension_amount=}")
         reward += 1 - torch.tanh(5 * extension_amount)
         self.max_reward += 1
 
