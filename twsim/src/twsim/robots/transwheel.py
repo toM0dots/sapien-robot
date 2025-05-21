@@ -276,10 +276,10 @@ class TransWheel(BaseAgent):
         print(f"{wheel_actions.shape=}")
         extension_actions = action[..., 4:]
         print(f"{extension_actions.shape=}")
-        extension_actions = action[..., 4:].repeat_interleave(num_extensions, dim=1)
+        extension_actions = action[..., 4:].repeat_interleave(num_extensions, dim=-1)
         print(f"{extension_actions.shape=}")
 
-        new_action = torch.cat((wheel_actions, extension_actions), dim=1)
+        new_action = torch.cat((wheel_actions, extension_actions), dim=-1)
 
         self.controller.set_action(new_action)
 
