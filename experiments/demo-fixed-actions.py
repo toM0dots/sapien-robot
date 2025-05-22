@@ -93,6 +93,7 @@ for stepi in range(max_steps):
 
     obs, reward, terminated, truncated, info = env.step(action)
     print(f"{reward=}")
+    print(f"{info=}")
 
     # No need to check this condition when running a sequence
     # done = terminated or truncated
