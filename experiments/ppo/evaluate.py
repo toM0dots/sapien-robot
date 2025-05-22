@@ -1,14 +1,6 @@
-from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
 
-import gymnasium as gym
-import torch
 import tyro
-from agent import Agent
-from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper
-from mani_skill.utils.wrappers.record import RecordEpisode
-from mani_skill.vector.wrappers.gymnasium import ManiSkillVectorEnv
 
 
 @dataclass
@@ -36,6 +28,16 @@ if __name__ == "__main__":
     #
 
     args = tyro.cli(Args)
+
+    from collections import defaultdict
+    from pathlib import Path
+
+    import gymnasium as gym
+    import torch
+    from agent import Agent
+    from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper
+    from mani_skill.utils.wrappers.record import RecordEpisode
+    from mani_skill.vector.wrappers.gymnasium import ManiSkillVectorEnv
 
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
