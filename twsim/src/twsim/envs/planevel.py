@@ -244,10 +244,8 @@ class PlaneVel(BaseEnv):
 
         # TODO: move to device? same for computing velocity error?
 
-        # NOTE: assuming normalized extension positions are between -1 (closed) and 1 (fully extended)
         # NOTE: distance is always positive, so, tanh will increase to 1 as distance decreases
         extension_amounts = obs[..., 4:8]
-        extension_amounts += 1.0
         extension_amount_reward = 1 - torch.tanh(5 * extension_amounts.sum(dim=-1).cpu())
         info["test"] = extension_amounts.sum(dim=-1).cpu()
         info["reward_extension"] = extension_amount_reward
