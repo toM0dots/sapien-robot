@@ -13,7 +13,7 @@ class Args:
     env_id: str = "PlaneVel-v1"              # Environment ID
     control_mode: str = "wheel_vel_ext_pos"  # Control mode
     capture_video: bool = True               # Save videos to ./runs/{run_name}/test_videos
-    num_eval_envs: int = 8                   # Number of parallel evaluation environments
+    num_eval_envs: int = 1                   # Number of parallel evaluation environments
     num_eval_steps: int = 500                # Number of steps to run in each evaluation environment
     eval_reconfiguration_freq: int = 1       # Reconfigure the environment each reset to ensure objects are randomized
     eval_partial_reset: bool = False         # Let parallel evaluation environments reset upon termination instead of truncation
@@ -29,7 +29,6 @@ if __name__ == "__main__":
 
     args = tyro.cli(Args)
 
-    from collections import defaultdict
     from pathlib import Path
 
     import gymnasium as gym
