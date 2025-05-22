@@ -18,7 +18,7 @@ from mani_skill.utils.building.ground import build_ground
 from mani_skill.utils.registration import register_env
 from mani_skill.utils.structs.types import GPUMemoryConfig, SimConfig
 
-from twsim.robots.transwheel import TransWheel
+from twsim.robots.transwheel import TransWheel, wheel_radius
 
 
 # TODO: set a reasonable number of max episode steps
@@ -37,7 +37,7 @@ class Plane(BaseEnv):
         self.robot_init_qpos_noise = robot_init_qpos_noise
 
         # TODO: set an initial position for the robot based on terrain and robot dimensions
-        self.initial_pose = sapien.Pose(p=[0.0, 0.0, 4e-2])
+        self.initial_pose = sapien.Pose(p=[0.0, 0.0, wheel_radius + 1e-3])
 
         # TODO: let user pass in target position/pose and radius
         self.target_pose = sapien.Pose(p=[0.5, 0.5, 0.0], q=[1.0, 0.0, 0.0, 0.0])
@@ -221,9 +221,9 @@ class Plane(BaseEnv):
         self.chassis_lin_vel_prev = chassis_lin_vel
 
         return dict(
-            orientation=chassis_orientation,
-            angular_velocity=chassis_angular_velocity,
-            linear_acceleration=chassis_linear_acceleration,
+            orientation=chassis_orientation,  # (N, 4)
+            angular_velocity=chassis_angular_velocity,  # (N, 3)
+            linear_acceleration=chassis_linear_acceleration,  # (N, 3)
         )
 
     def compute_dense_reward(self, obs, action: torch.Tensor, info: dict):
