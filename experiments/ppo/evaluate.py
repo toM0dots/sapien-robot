@@ -86,13 +86,14 @@ if __name__ == "__main__":
     print("Evaluating")
 
     eval_obs, _ = eval_envs.reset()
-    eval_metrics = defaultdict(list)
     num_episodes = 0
 
     observation_shape = eval_envs.single_observation_space.shape
     action_shape = eval_envs.single_action_space.shape
 
     agent = Agent(observation_shape, action_shape).to(device)
+    agent.load_state_dict(torch.load(args.checkpoint))
+    agent.eval()
 
     for _ in range(args.num_eval_steps):
         with torch.no_grad():
@@ -102,8 +103,6 @@ if __name__ == "__main__":
             if "final_info" in eval_infos:
                 mask = eval_infos["_final_info"]
                 num_episodes += mask.sum()
-                for k, v in eval_infos["final_info"]["episode"].items():
-                    eval_metrics[k].append(v)
 
     total_eval_steps = args.num_eval_steps * args.num_eval_envs
     print(f"Evaluated {total_eval_steps} steps resulting in {num_episodes} episodes")
