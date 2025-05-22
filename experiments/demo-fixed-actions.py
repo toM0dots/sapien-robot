@@ -86,14 +86,21 @@ for stepi in range(max_steps):
         break
 
     if action_index != old_action_index:
-        print(f"Step {stepi}: action {action_index + 1} of {len(action_sequence)}")
+        # print(f"Step {stepi}: action {action_index + 1} of {len(action_sequence)}")
         old_action_index = action_index
 
     action = action_sequence[action_index]
 
     obs, reward, terminated, truncated, info = env.step(action)
-    print(f"{reward=}")
-    print(f"{info=}")
+    # print(f"{reward=}")
+    # print(f"{info=}")
+
+    vel = env.agent.robot.get_root_linear_velocity()  # type: ignore
+    ver = env.compute_velocity_error()  # type: ignore
+    vel_reward =
+
+    ext = action[0, 4:].tolist() if isinstance(action, torch.Tensor) else action[4:]
+    print(f"velocity={vel}, extension={ext}, reward={reward}")
 
     # No need to check this condition when running a sequence
     # done = terminated or truncated
