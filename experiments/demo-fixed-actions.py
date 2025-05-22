@@ -92,6 +92,7 @@ for stepi in range(max_steps):
     action = action_sequence[action_index]
 
     obs, reward, terminated, truncated, info = env.step(action)
+    print(f"{reward=}")
 
     # No need to check this condition when running a sequence
     # done = terminated or truncated
