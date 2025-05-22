@@ -224,7 +224,7 @@ class PlaneVel(BaseEnv):
         self.max_reward = 0
         reward = 0
 
-        info["velocity"] = self.agent.robot.get_root_linear_velocity().cpu()
+        # info["velocity"] = self.agent.robot.get_root_linear_velocity().cpu()
         info["extension"] = obs[..., 4:8].sum(dim=-1).cpu()
 
         #
@@ -234,7 +234,7 @@ class PlaneVel(BaseEnv):
         # NOTE: distance is always positive, so, tanh will increase to 1 as distance decreases
         velocity_error = self.compute_velocity_error()
         velocity_error_reward = 1 - torch.tanh(5 * velocity_error)
-        info["reward_velocity"] = velocity_error.cpu()
+        # info["reward_velocity"] = velocity_error.cpu()
         reward += velocity_error_reward
         self.max_reward += 1
 
@@ -249,6 +249,7 @@ class PlaneVel(BaseEnv):
         extension_amounts = obs[..., 4:8]
         extension_amounts += 1.0
         extension_amount_reward = 1 - torch.tanh(5 * extension_amounts.sum(dim=-1).cpu())
+        info["test"] = extension_amounts.sum(dim=-1).cpu()
         info["reward_extension"] = extension_amount_reward
         reward += extension_amount_reward
         self.max_reward += 1
