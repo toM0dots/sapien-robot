@@ -303,8 +303,8 @@ class TransWheel(BaseAgent):
         )
 
         # TODO: set reasonable values
-        position_stiffness = 10
-        position_damping = 1
+        position_stiffness = 100
+        position_damping = 10
 
         extension_position_controllers = PDJointPosControllerConfig(
             joint_names=ext_joint_names,
