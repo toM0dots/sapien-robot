@@ -252,7 +252,7 @@ class PlaneVel(BaseEnv):
 
         # NOTE: distance is always positive, so, tanh will increase to 1 as distance decreases
         extension_amounts = obs[..., 4:8]
-        extension_amount_reward = 1 - torch.tanh(5 * extension_amounts.sum(dim=-1).cpu())
+        extension_amount_reward = 1 - torch.tanh(1 * extension_amounts.sum(dim=-1).cpu())
         info["reward_extension"] = extension_amount_reward
         reward += extension_amount_reward
         self.max_reward += 1
