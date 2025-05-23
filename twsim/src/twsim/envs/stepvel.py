@@ -273,6 +273,7 @@ class StepVel(BaseEnv):
             orientation=chassis_orientation,  # (N, 4)
             angular_velocity=chassis_angular_velocity,  # (N, 3)
             linear_acceleration=chassis_linear_acceleration,  # (N, 3)
+            # TODO: needs to be optional
             collision=torch.tensor(collision).type(torch.float),
         )
 
