@@ -134,7 +134,8 @@ class StepVelSensor(BaseEnv):
         step_material = (0.4, 0.2, 0.4)
 
         # TODO: why divide by 2
-        step_position = (0.15, 0, step_half_size[2] / 2)
+        # TODO: change this back to 0.15
+        step_position = (9.15, 0, step_half_size[2] / 2)
 
         builder = self.scene.create_actor_builder()
 
