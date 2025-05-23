@@ -21,6 +21,23 @@ from mani_skill.utils.structs.types import GPUMemoryConfig, SimConfig
 from twsim.robots.transwheel import TransWheel, wheel_radius
 
 
+def check_collision(a, b):
+    a_min_x, a_min_y, a_min_z = a[0]
+    a_max_x, a_max_y, a_max_z = a[1]
+
+    b_min_x, b_min_y, b_min_z = b[0]
+    b_max_x, b_max_y, b_max_z = b[1]
+
+    return (
+        a_min_x <= b_max_x
+        and a_max_x >= b_min_x
+        and a_min_y <= b_max_y
+        and a_max_y >= b_min_y
+        and a_min_z <= b_max_z
+        and a_max_z >= b_min_z
+    )
+
+
 # TODO: set a reasonable number of max episode steps
 @register_env("StepVel-v1", max_episode_steps=200)
 class StepVel(BaseEnv):
@@ -89,13 +106,17 @@ class StepVel(BaseEnv):
             texture_square_len=1,
         )
 
-        step_half_size = (3e-2, 3e-1, 2e-2)
+        step_half_size = (0.03, 0.3, 0.02)
+        step_material = (0.4, 0.2, 0.4)
+
+        # TODO: why divide by 2
+        step_position = (0.15, 0, step_half_size[2] / 2)
 
         builder = self.scene.create_actor_builder()
 
-        builder.initial_pose = sapien.Pose(p=(0.15, 0, 0.01), q=(1, 0, 0, 0))  # type: ignore
+        builder.initial_pose = sapien.Pose(p=step_position, q=(1, 0, 0, 0))  # type: ignore
         builder.add_box_collision(half_size=step_half_size)
-        builder.add_box_visual(half_size=step_half_size, material=(0.4, 0.2, 0.4))
+        builder.add_box_visual(half_size=step_half_size, material=step_material)
         self.step_obj = builder.build_static(name="step")
 
     def _after_reconfigure(self, options):
@@ -104,7 +125,7 @@ class StepVel(BaseEnv):
         return super()._after_reconfigure(options)
 
     def get_bboxes(self):
-        return self.agent.robot.get_collision_meshes(), self.step_bbox  # type: ignore
+        return self.agent.robot.get_first_collision_mesh(), self.step_bbox  # type: ignore
 
     # @property
     # def _default_sensor_configs(self):
@@ -243,6 +264,9 @@ class StepVel(BaseEnv):
 
         info["velocity"] = self.agent.robot.get_root_linear_velocity().cpu()
         info["extension"] = obs[..., 4:8].sum(dim=-1).cpu()
+
+        robot_bbox, step_bbox = self.get_bboxes()
+        info["collision"] = check_collision(robot_bbox.bounds, step_bbox.bounds)  # type: ignore
 
         #
         # Reward for moving at the correct velocity
