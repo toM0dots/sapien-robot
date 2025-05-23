@@ -102,6 +102,7 @@ if __name__ == "__main__":
             if "final_info" in eval_infos:
                 mask = eval_infos["_final_info"]
                 num_episodes += mask.sum()
+                break
 
     total_eval_steps = args.num_eval_steps * args.num_eval_envs
     print(f"Evaluated {total_eval_steps} steps resulting in {num_episodes} episodes")
