@@ -1,6 +1,22 @@
-# Evaluation Notes
+# Notes for PPO experiments
+
+## Training Notes
+
+```bash
+# PlaneVel
+python train-ppo.py --exp-name PlaneEnv --env-id PlaneVel-v1 --control-mode wheel_vel_ext_pos --num-steps 80
+
+# StepVel
+python train-ppo.py --exp-name StepEnv --env-id StepVel-v1 --control-mode wheel_vel_ext_pos --num-steps 80
+
+# TODO: StepVelSensor
+python train-ppo.py --exp-name SensorEnv --env-id StepVelSensor-v1 --control-mode wheel_vel_ext_pos --num-steps 80
+```
+
+## Evaluation Notes
 
 TODO: I need to make the step and sensor optional? Just one configurable environment instead of multiple
+TODO: make video aspect ratio configurable
 
 ```bash
 # Evaluate the model trained in PlaneVel in PlaneVel
