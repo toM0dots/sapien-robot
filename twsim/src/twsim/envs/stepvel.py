@@ -155,8 +155,8 @@ class StepVel(BaseEnv):
             .unsqueeze(dim=0)
             .repeat(self.num_envs, 1, 1)
         )
-        print(f"{self.agent_bbox.shape=}")
-        print(f"{self.step_bbox.shape=}")
+        # print(f"{self.agent_bbox.shape=}")
+        # print(f"{self.step_bbox.shape=}")
         return super()._after_reconfigure(options)
 
     def get_bboxes(self):
@@ -165,9 +165,9 @@ class StepVel(BaseEnv):
         positions = (
             self.agent.robot.get_root_pose().get_p().unsqueeze(dim=1).repeat(1, 2, 1).cpu()
         )
-        print(f"{positions.shape=}")
+        # print(f"{positions.shape=}")
         agent_bboxes = (self.agent_bbox + positions).cpu()
-        print(f"{agent_bboxes.shape=}")
+        # print(f"{agent_bboxes.shape=}")
         return agent_bboxes, self.step_bbox
 
     # @property
@@ -291,17 +291,24 @@ class StepVel(BaseEnv):
         self.chassis_lin_vel_prev = chassis_lin_vel
 
         robot_bbox, step_bbox = self.get_bboxes()
-        collision = (bbox_distance(robot_bbox, step_bbox) < 0.01).type(torch.float)
+        collision = (
+            (bbox_distance(robot_bbox, step_bbox) < 0.01)
+            .type(torch.float)
+            .to(device=self.device)
+        )
 
         # print(f"{self.agent.robot.get_pose().get_p()=}")
         # print(f"{collision=}")
+
+        print(f"{chassis_orientation.device=}")
+        print(f"{collision.device=}")
 
         return dict(
             orientation=chassis_orientation,  # (N, 4)
             angular_velocity=chassis_angular_velocity,  # (N, 3)
             linear_acceleration=chassis_linear_acceleration,  # (N, 3)
             # TODO: needs to be optional
-            collision=torch.tensor(collision).type(torch.float),
+            collision=collision,  # (N, 1)
         )
 
     def compute_dense_reward(self, obs, action: torch.Tensor, info: dict):
