@@ -96,7 +96,15 @@ class StepVel(BaseEnv):
         builder.initial_pose = sapien.Pose(p=(0.15, 0, 0.01), q=(1, 0, 0, 0))  # type: ignore
         builder.add_box_collision(half_size=step_half_size)
         builder.add_box_visual(half_size=step_half_size, material=(0.4, 0.2, 0.4))
-        builder.build_static(name="step")
+        self.step_obj = builder.build_static(name="step")
+
+    def _after_reconfigure(self, options):
+        self.agent_bbox = self.agent.robot.get_first_collision_mesh().bounding_box  # type: ignore
+        self.step_bbox = self.step_obj.get_first_collision_mesh().bounding_box  # type: ignore
+        return super()._after_reconfigure(options)
+
+    def get_bboxes(self):
+        return self.agent_bbox, self.step_bbox
 
     # @property
     # def _default_sensor_configs(self):
