@@ -269,6 +269,9 @@ class StepVel(BaseEnv):
         robot_bbox, step_bbox = self.get_bboxes()
         collision = bbox_distance(robot_bbox, step_bbox) < 0.01
 
+        print(f"{self.agent.robot.get_pose().get_p()=}")
+        print(f"{collision=}")
+
         return dict(
             orientation=chassis_orientation,  # (N, 4)
             angular_velocity=chassis_angular_velocity,  # (N, 3)
