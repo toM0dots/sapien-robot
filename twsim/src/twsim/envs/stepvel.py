@@ -41,20 +41,23 @@ def check_collision(a, b):
 # TODO: format more like the above (or vice versa)
 def bbox_distance(a, b):
     """
-    Compute the minimum Euclidean distance between two 3D bounding boxes.
-    Each bbox should be a tuple/list of (min_corner, max_corner), where each corner is (x, y, z).
+    Compute the minimum Euclidean distance between two 3D bounding boxes (batched).
+    Each bbox should be a tensor of shape (batch, 2, 3), where [:,0,:] is min_corner and [:,1,:] is max_corner.
+    Returns: tensor of shape (batch,)
     """
-    import numpy as np
-
-    a_min, a_max = a
-    b_min, b_max = b
+    # a, b: (batch, 2, 3)
+    a_min, a_max = a[:, 0, :], a[:, 1, :]
+    b_min, b_max = b[:, 0, :], b[:, 1, :]
 
     # For each axis, compute the distance between the boxes (0 if overlapping)
-    dx = max(a_min[0] - b_max[0], b_min[0] - a_max[0], 0)
-    dy = max(a_min[1] - b_max[1], b_min[1] - a_max[1], 0)
-    dz = max(a_min[2] - b_max[2], b_min[2] - a_max[2], 0)
+    dx = torch.maximum(a_min[:, 0] - b_max[:, 0], b_min[:, 0] - a_max[:, 0])
+    dx = torch.clamp(dx, min=0)
+    dy = torch.maximum(a_min[:, 1] - b_max[:, 1], b_min[:, 1] - a_max[:, 1])
+    dy = torch.clamp(dy, min=0)
+    dz = torch.maximum(a_min[:, 2] - b_max[:, 2], b_min[:, 2] - a_max[:, 2])
+    dz = torch.clamp(dz, min=0)
 
-    return np.sqrt(dx * dx + dy * dy + dz * dz)
+    return torch.sqrt(dx * dx + dy * dy + dz * dz)
 
 
 # TODO: set a reasonable number of max episode steps
@@ -160,7 +163,14 @@ class StepVel(BaseEnv):
 
     def get_bboxes(self):
         # TODO: use the robot's initial bounding box and current position
-        return self.agent.robot.get_first_collision_mesh().bounds, self.step_bbox  # type: ignore
+        # return self.agent.robot.get_first_collision_mesh().bounds, self.step_bbox  # type: ignore
+        positions = self.agent.robot.get_root_pose().get_p()
+        print(f"{positions=}")
+        print(f"{positions.shape=}")
+        agent_bboxes = self.agent_bbox + positions.unsqueeze(dim=1).repeat(1, 2, 1)
+        print(f"{agent_bboxes=}")
+        print(f"{agent_bboxes.shape=}")
+        return agent_bboxes, self.step_bbox
 
     # @property
     # def _default_sensor_configs(self):
@@ -283,12 +293,10 @@ class StepVel(BaseEnv):
         self.chassis_lin_vel_prev = chassis_lin_vel
 
         robot_bbox, step_bbox = self.get_bboxes()
-        print(f"{step_bbox=}")
-        print(f"{robot_bbox=}")
-        collision = bbox_distance(robot_bbox, step_bbox) < 0.01
+        collision = (bbox_distance(robot_bbox, step_bbox) < 0.01).type(torch.float)
 
-        print(f"{self.agent.robot.get_pose().get_p()=}")
-        print(f"{collision=}")
+        # print(f"{self.agent.robot.get_pose().get_p()=}")
+        # print(f"{collision=}")
 
         return dict(
             orientation=chassis_orientation,  # (N, 4)
@@ -312,7 +320,7 @@ class StepVel(BaseEnv):
 
         robot_bbox, step_bbox = self.get_bboxes()
         # info["collision"] = check_collision(robot_bbox.bounds, step_bbox.bounds)  # type: ignore
-        info["collision"] = bbox_distance < 0.01  # type: ignore
+        # info["collision"] = bbox_distance < 0.01  # type: ignore
         info["distance"] = bbox_distance(robot_bbox, step_bbox)  # type: ignore
 
         #
