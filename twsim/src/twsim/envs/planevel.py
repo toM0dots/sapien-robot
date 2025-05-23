@@ -107,12 +107,17 @@ class PlaneVel(BaseEnv):
         # Another feature here is that if there is a camera called render_camera, this is the default view shown initially when a GUI is opened
         pose = sapien_utils.look_at(eye=[0.6, 0.7, 0.6], target=[0.0, 0.0, 0.35])
         # TODO: look into other camera options (specifically the entity uid and mount)
+
+        ratio = 16 / 9
+        width = 1024
+        height = int(width / ratio)
+
         return [
             CameraConfig(
                 "render_camera",
                 pose,
-                width=512,
-                height=512,
+                width=width,
+                height=height,
                 fov=1,
                 mount=self.agent.robot.get_root(),
             )
