@@ -99,12 +99,12 @@ class StepVel(BaseEnv):
         self.step_obj = builder.build_static(name="step")
 
     def _after_reconfigure(self, options):
-        self.agent_bbox = self.agent.robot.get_first_collision_mesh().bounding_box  # type: ignore
+        # self.agent_bbox = self.agent.robot.get_first_collision_mesh().bounding_box  # type: ignore
         self.step_bbox = self.step_obj.get_first_collision_mesh().bounding_box  # type: ignore
         return super()._after_reconfigure(options)
 
     def get_bboxes(self):
-        return self.agent_bbox, self.step_bbox
+        return self.agent.robot.get_first_collision_mesh().bounding_box, self.step_bbox  # type: ignore
 
     # @property
     # def _default_sensor_configs(self):
