@@ -140,11 +140,11 @@ class StepVel(BaseEnv):
 
     def _after_reconfigure(self, options):
         # self.agent_bbox = self.agent.robot.get_first_collision_mesh().bounding_box  # type: ignore
-        self.step_bbox = self.step_obj.get_first_collision_mesh().bounding_box  # type: ignore
+        self.step_bbox = self.step_obj.get_first_collision_mesh().bounding_box.bounds  # type: ignore
         return super()._after_reconfigure(options)
 
     def get_bboxes(self):
-        return self.agent.robot.get_first_collision_mesh(), self.step_bbox  # type: ignore
+        return self.agent.robot.get_first_collision_mesh().bounds, self.step_bbox  # type: ignore
 
     # @property
     # def _default_sensor_configs(self):
@@ -266,10 +266,14 @@ class StepVel(BaseEnv):
         ) / self.sim_timestep
         self.chassis_lin_vel_prev = chassis_lin_vel
 
+        robot_bbox, step_bbox = self.get_bboxes()
+        collision = bbox_distance(robot_bbox, step_bbox) < 0.01
+
         return dict(
             orientation=chassis_orientation,  # (N, 4)
             angular_velocity=chassis_angular_velocity,  # (N, 3)
             linear_acceleration=chassis_linear_acceleration,  # (N, 3)
+            collision=torch.tensor(collision).type(torch.float),
         )
 
     def compute_dense_reward(self, obs, action: torch.Tensor, info: dict):
@@ -285,8 +289,9 @@ class StepVel(BaseEnv):
         info["extension"] = obs[..., 4:8].sum(dim=-1).cpu()
 
         robot_bbox, step_bbox = self.get_bboxes()
-        info["collision"] = check_collision(robot_bbox.bounds, step_bbox.bounds)  # type: ignore
-        info["distance"] = bbox_distance(robot_bbox.bounds, step_bbox.bounds)  # type: ignore
+        # info["collision"] = check_collision(robot_bbox.bounds, step_bbox.bounds)  # type: ignore
+        info["collision"] = bbox_distance < 0.01  # type: ignore
+        info["distance"] = bbox_distance(robot_bbox, step_bbox)  # type: ignore
 
         #
         # Reward for moving at the correct velocity
