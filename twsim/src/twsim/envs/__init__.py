@@ -1,1 +1,1 @@
-from . import plane, planevel, stepvel  # noqa: F401
+from . import plane, planevel, stepvel, stepvelsensor  # noqa: F401

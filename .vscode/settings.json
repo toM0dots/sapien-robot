@@ -21,6 +21,7 @@
     "setuptools",
     "stepi",
     "stepvel",
+    "stepvelsensor",
     "timestep",
     "timesteps",
     "transwheel",
