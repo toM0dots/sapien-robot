@@ -38,6 +38,25 @@ def check_collision(a, b):
     )
 
 
+# TODO: format more like the above (or vice versa)
+def bbox_distance(a, b):
+    """
+    Compute the minimum Euclidean distance between two 3D bounding boxes.
+    Each bbox should be a tuple/list of (min_corner, max_corner), where each corner is (x, y, z).
+    """
+    import numpy as np
+
+    a_min, a_max = a
+    b_min, b_max = b
+
+    # For each axis, compute the distance between the boxes (0 if overlapping)
+    dx = max(a_min[0] - b_max[0], b_min[0] - a_max[0], 0)
+    dy = max(a_min[1] - b_max[1], b_min[1] - a_max[1], 0)
+    dz = max(a_min[2] - b_max[2], b_min[2] - a_max[2], 0)
+
+    return np.sqrt(dx * dx + dy * dy + dz * dz)
+
+
 # TODO: set a reasonable number of max episode steps
 @register_env("StepVel-v1", max_episode_steps=200)
 class StepVel(BaseEnv):
@@ -267,6 +286,7 @@ class StepVel(BaseEnv):
 
         robot_bbox, step_bbox = self.get_bboxes()
         info["collision"] = check_collision(robot_bbox.bounds, step_bbox.bounds)  # type: ignore
+        info["distance"] = bbox_distance(robot_bbox.bounds, step_bbox.bounds)  # type: ignore
 
         #
         # Reward for moving at the correct velocity
