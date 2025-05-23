@@ -155,20 +155,18 @@ class StepVel(BaseEnv):
             .unsqueeze(dim=0)
             .repeat(self.num_envs, 1, 1)
         )
-        print(f"{self.agent_bbox=}")
         print(f"{self.agent_bbox.shape=}")
-        print(f"{self.step_bbox=}")
         print(f"{self.step_bbox.shape=}")
         return super()._after_reconfigure(options)
 
     def get_bboxes(self):
         # TODO: use the robot's initial bounding box and current position
         # return self.agent.robot.get_first_collision_mesh().bounds, self.step_bbox  # type: ignore
-        positions = self.agent.robot.get_root_pose().get_p()
-        print(f"{positions=}")
+        positions = (
+            self.agent.robot.get_root_pose().get_p().unsqueeze(dim=1).repeat(1, 2, 1).cpu()
+        )
         print(f"{positions.shape=}")
-        agent_bboxes = self.agent_bbox + positions.unsqueeze(dim=1).repeat(1, 2, 1)
-        print(f"{agent_bboxes=}")
+        agent_bboxes = (self.agent_bbox + positions).cpu()
         print(f"{agent_bboxes.shape=}")
         return agent_bboxes, self.step_bbox
 
