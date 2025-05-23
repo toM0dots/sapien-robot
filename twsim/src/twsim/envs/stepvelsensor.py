@@ -63,8 +63,8 @@ def bbox_distance(a, b):
 
 
 # TODO: set a reasonable number of max episode steps
-@register_env("StepVel-v1", max_episode_steps=200)
-class StepVel(BaseEnv):
+@register_env("StepVelSensor-v1", max_episode_steps=200)
+class StepVelSensor(BaseEnv):
     """This environment includes a step in front of the robot on a flat plane.
 
     This environment does not have a success condition.
@@ -292,12 +292,12 @@ class StepVel(BaseEnv):
         ) / self.sim_timestep
         self.chassis_lin_vel_prev = chassis_lin_vel
 
-        # robot_bbox, step_bbox = self.get_bboxes()
-        # collision = (
-        #     (bbox_distance(robot_bbox, step_bbox) < 0.01)
-        #     .type(torch.float)
-        #     .to(device=self.device)
-        # )
+        robot_bbox, step_bbox = self.get_bboxes()
+        collision = (
+            (bbox_distance(robot_bbox, step_bbox) < 0.01)
+            .type(torch.float)
+            .to(device=self.device)
+        )
 
         # print(f"{self.agent.robot.get_pose().get_p()=}")
         # print(f"{collision=}")
@@ -309,6 +309,8 @@ class StepVel(BaseEnv):
             orientation=chassis_orientation,  # (N, 4)
             angular_velocity=chassis_angular_velocity,  # (N, 3)
             linear_acceleration=chassis_linear_acceleration,  # (N, 3)
+            # TODO: needs to be optional
+            collision=collision,  # (N, 1)
         )
 
     def compute_dense_reward(self, obs, action: torch.Tensor, info: dict):
