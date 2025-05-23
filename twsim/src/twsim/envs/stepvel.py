@@ -1,6 +1,8 @@
 """
 NOTE: The coordinate frame in Sapien is: x(forward), y(left), z(upward)
 
+TODO: consider GPU vs CPU in all relevant places
+
 TODO: consider the following methods
 - _default_sensor_configs
 - _setup_sensors
@@ -300,8 +302,8 @@ class StepVel(BaseEnv):
         # print(f"{self.agent.robot.get_pose().get_p()=}")
         # print(f"{collision=}")
 
-        print(f"{chassis_orientation.device=}")
-        print(f"{collision.device=}")
+        # print(f"{chassis_orientation.device=}")
+        # print(f"{collision.device=}")
 
         return dict(
             orientation=chassis_orientation,  # (N, 4)
