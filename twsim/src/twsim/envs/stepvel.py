@@ -267,6 +267,8 @@ class StepVel(BaseEnv):
         self.chassis_lin_vel_prev = chassis_lin_vel
 
         robot_bbox, step_bbox = self.get_bboxes()
+        print(f"{step_bbox=}")
+        print(f"{robot_bbox=}")
         collision = bbox_distance(robot_bbox, step_bbox) < 0.01
 
         print(f"{self.agent.robot.get_pose().get_p()=}")
