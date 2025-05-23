@@ -140,10 +140,26 @@ class StepVel(BaseEnv):
 
     def _after_reconfigure(self, options):
         # self.agent_bbox = self.agent.robot.get_first_collision_mesh().bounding_box  # type: ignore
-        self.step_bbox = self.step_obj.get_first_collision_mesh().bounding_box.bounds  # type: ignore
+        self.agent_bbox = (
+            torch.tensor(
+                [[-0.06000149, -0.04700007, -0.03125], [0.06064923, 0.04700007, 0.03125]],
+            )
+            .unsqueeze(dim=0)
+            .repeat(self.num_envs, 1, 1)
+        )
+        self.step_bbox = (
+            torch.tensor(self.step_obj.get_first_collision_mesh().bounding_box.bounds)  # type: ignore
+            .unsqueeze(dim=0)
+            .repeat(self.num_envs, 1, 1)
+        )
+        print(f"{self.agent_bbox=}")
+        print(f"{self.agent_bbox.shape=}")
+        print(f"{self.step_bbox=}")
+        print(f"{self.step_bbox.shape=}")
         return super()._after_reconfigure(options)
 
     def get_bboxes(self):
+        # TODO: use the robot's initial bounding box and current position
         return self.agent.robot.get_first_collision_mesh().bounds, self.step_bbox  # type: ignore
 
     # @property
