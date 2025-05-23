@@ -19,6 +19,7 @@
     "sapien",
     "setuptools",
     "stepi",
+    "stepvel",
     "timestep",
     "timesteps",
     "transwheel",
