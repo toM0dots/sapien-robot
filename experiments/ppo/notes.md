@@ -5,13 +5,19 @@
 ```bash
 # PlaneVel
 python train-ppo.py --exp-name PlaneEnv --env-id PlaneVel-v1 --control-mode wheel_vel_ext_pos --num-steps 80
+python train-ppo.py --env-id PlaneVel-v1 --control-mode wheel_vel_ext_pos --evaluate --checkpoint runs/PlaneEnv/final_ckpt.pt --num_eval_envs 1 --num_eval_steps 80
+python train-ppo.py --env-id StepVel-v1 --control-mode wheel_vel_ext_pos --evaluate --checkpoint runs/PlaneEnv/final_ckpt.pt --num_eval_envs 1 --num_eval_steps 80
 
 # StepVel
 python train-ppo.py --exp-name StepEnv --env-id StepVel-v1 --control-mode wheel_vel_ext_pos --num-steps 80
+python train-ppo.py --env-id PlaneVel-v1 --control-mode wheel_vel_ext_pos --evaluate --checkpoint runs/StepEnv/final_ckpt.pt --num_eval_envs 1 --num_eval_steps 80
+python train-ppo.py --env-id StepVel-v1 --control-mode wheel_vel_ext_pos --evaluate --checkpoint runs/StepEnv/final_ckpt.pt --num_eval_envs 1 --num_eval_steps 80
 
 # TODO: StepVelSensor
 python train-ppo.py --exp-name SensorEnv --env-id StepVelSensor-v1 --control-mode wheel_vel_ext_pos --num-steps 80
 ```
+
+
 
 ## Evaluation Notes
 
