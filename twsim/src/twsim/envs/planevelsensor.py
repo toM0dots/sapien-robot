@@ -130,20 +130,20 @@ class PlaneVelSensor(BaseEnv):
             texture_square_len=1,
         )
 
-        # step_half_size = (0.03, 0.3, 0.02)
-        # step_material = (0.4, 0.2, 0.4)
+        step_half_size = (0.03, 0.3, 0.02)
+        step_material = (0.4, 0.2, 0.4)
 
-        # # TODO: why divide by 2
-        # # TODO: make step position configurable
-        # # step_position = (9.15, 0, step_half_size[2] / 2)
-        # step_position = (0.15, 0, step_half_size[2] / 2)
+        # TODO: why divide by 2
+        # TODO: make step position configurable
+        # step_position = (9.15, 0, step_half_size[2] / 2)
+        step_position = (9.15, 0, step_half_size[2] / 2)
 
-        # builder = self.scene.create_actor_builder()
+        builder = self.scene.create_actor_builder()
 
-        # builder.initial_pose = sapien.Pose(p=step_position, q=(1, 0, 0, 0))  # type: ignore
-        # builder.add_box_collision(half_size=step_half_size)
-        # builder.add_box_visual(half_size=step_half_size, material=step_material)
-        # self.step_obj = builder.build_static(name="step")
+        builder.initial_pose = sapien.Pose(p=step_position, q=(1, 0, 0, 0))  # type: ignore
+        builder.add_box_collision(half_size=step_half_size)
+        builder.add_box_visual(half_size=step_half_size, material=step_material)
+        self.step_obj = builder.build_static(name="step")
 
     def _after_reconfigure(self, options):
         # self.agent_bbox = self.agent.robot.get_first_collision_mesh().bounding_box  # type: ignore
