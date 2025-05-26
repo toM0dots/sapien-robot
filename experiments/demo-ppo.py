@@ -17,7 +17,7 @@ from mani_skill.vector.wrappers.gymnasium import ManiSkillVectorEnv
 from torch.distributions.normal import Normal
 from torch.utils.tensorboard import SummaryWriter
 
-from twsim.envs import plane  # noqa: F401
+from twsim.envs import explore  # noqa: F401
 from twsim.robots import transwheel  # noqa: F401
 
 
