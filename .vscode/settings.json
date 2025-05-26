@@ -1,5 +1,7 @@
 {
   "cSpell.words": [
+    "bboxes",
+    "ckpt",
     "cudnn",
     "dones",
     "fourcc",
@@ -14,12 +16,14 @@
     "MJCF",
     "physx",
     "planevel",
+    "planevelsensor",
     "qpos",
     "qvel",
     "sapien",
     "setuptools",
     "stepi",
     "stepvel",
+    "stepvelsensor",
     "timestep",
     "timesteps",
     "transwheel",

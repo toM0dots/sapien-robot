@@ -61,3 +61,7 @@ Comments from the documentation:
   - [docs](https://maniskill.readthedocs.io/en/latest/user_guide/tutorials/custom_tasks/advanced.html#scene-masks)
 - "env.get_state_dict() returns a state dictionary containing the entirety of simulation state of actors and articulations in the state dict registry"
 - ManiSkill environments are batched by default
+
+## Notes
+
+- Work on a better collision sensor

@@ -1,6 +1,8 @@
 """
 NOTE: The coordinate frame in Sapien is: x(forward), y(left), z(upward)
 
+TODO: consider GPU vs CPU in all relevant places
+
 TODO: consider the following methods
 - _default_sensor_configs
 - _setup_sensors
@@ -21,10 +23,49 @@ from mani_skill.utils.structs.types import GPUMemoryConfig, SimConfig
 from twsim.robots.transwheel import TransWheel, wheel_radius
 
 
+def check_collision(a, b):
+    a_min_x, a_min_y, a_min_z = a[0]
+    a_max_x, a_max_y, a_max_z = a[1]
+
+    b_min_x, b_min_y, b_min_z = b[0]
+    b_max_x, b_max_y, b_max_z = b[1]
+
+    return (
+        a_min_x <= b_max_x
+        and a_max_x >= b_min_x
+        and a_min_y <= b_max_y
+        and a_max_y >= b_min_y
+        and a_min_z <= b_max_z
+        and a_max_z >= b_min_z
+    )
+
+
+# TODO: format more like the above (or vice versa)
+def bbox_distance(a, b):
+    """
+    Compute the minimum Euclidean distance between two 3D bounding boxes (batched).
+    Each bbox should be a tensor of shape (batch, 2, 3), where [:,0,:] is min_corner and [:,1,:] is max_corner.
+    Returns: tensor of shape (batch,)
+    """
+    # a, b: (batch, 2, 3)
+    a_min, a_max = a[:, 0, :], a[:, 1, :]
+    b_min, b_max = b[:, 0, :], b[:, 1, :]
+
+    # For each axis, compute the distance between the boxes (0 if overlapping)
+    dx = torch.maximum(a_min[:, 0] - b_max[:, 0], b_min[:, 0] - a_max[:, 0])
+    dx = torch.clamp(dx, min=0)
+    dy = torch.maximum(a_min[:, 1] - b_max[:, 1], b_min[:, 1] - a_max[:, 1])
+    dy = torch.clamp(dy, min=0)
+    dz = torch.maximum(a_min[:, 2] - b_max[:, 2], b_min[:, 2] - a_max[:, 2])
+    dz = torch.clamp(dz, min=0)
+
+    return torch.sqrt(dx * dx + dy * dy + dz * dz)
+
+
 # TODO: set a reasonable number of max episode steps
-@register_env("PlaneVel-v1", max_episode_steps=200)
-class PlaneVel(BaseEnv):
-    """This is a flat plane environment for debugging purposes.
+@register_env("PlaneVelSensor-v1", max_episode_steps=200)
+class PlaneVelSensor(BaseEnv):
+    """This environment includes a step in front of the robot on a flat plane.
 
     This environment does not have a success condition.
     """
@@ -89,6 +130,50 @@ class PlaneVel(BaseEnv):
             texture_square_len=1,
         )
 
+        step_half_size = (0.03, 0.3, 0.02)
+        step_material = (0.4, 0.2, 0.4)
+
+        # TODO: why divide by 2
+        # TODO: make step position configurable
+        # step_position = (9.15, 0, step_half_size[2] / 2)
+        step_position = (9.15, 0, step_half_size[2] / 2)
+
+        builder = self.scene.create_actor_builder()
+
+        builder.initial_pose = sapien.Pose(p=step_position, q=(1, 0, 0, 0))  # type: ignore
+        builder.add_box_collision(half_size=step_half_size)
+        builder.add_box_visual(half_size=step_half_size, material=step_material)
+        self.step_obj = builder.build_static(name="step")
+
+    def _after_reconfigure(self, options):
+        # self.agent_bbox = self.agent.robot.get_first_collision_mesh().bounding_box  # type: ignore
+        self.agent_bbox = (
+            torch.tensor(
+                [[-0.06000149, -0.04700007, -0.03125], [0.06064923, 0.04700007, 0.03125]],
+            )
+            .unsqueeze(dim=0)
+            .repeat(self.num_envs, 1, 1)
+        )
+        self.step_bbox = (
+            torch.tensor(self.step_obj.get_first_collision_mesh().bounding_box.bounds)  # type: ignore
+            .unsqueeze(dim=0)
+            .repeat(self.num_envs, 1, 1)
+        )
+        # print(f"{self.agent_bbox.shape=}")
+        # print(f"{self.step_bbox.shape=}")
+        return super()._after_reconfigure(options)
+
+    def get_bboxes(self):
+        # TODO: use the robot's initial bounding box and current position
+        # return self.agent.robot.get_first_collision_mesh().bounds, self.step_bbox  # type: ignore
+        positions = (
+            self.agent.robot.get_root_pose().get_p().unsqueeze(dim=1).repeat(1, 2, 1).cpu()
+        )
+        # print(f"{positions.shape=}")
+        agent_bboxes = (self.agent_bbox + positions).cpu()
+        # print(f"{agent_bboxes.shape=}")
+        return agent_bboxes, self.step_bbox
+
     # @property
     # def _default_sensor_configs(self):
     #     # To customize the sensors that capture images/point clouds for the environment observations,
@@ -107,7 +192,6 @@ class PlaneVel(BaseEnv):
         # Another feature here is that if there is a camera called render_camera, this is the default view shown initially when a GUI is opened
         pose = sapien_utils.look_at(eye=[0.6, 0.7, 0.6], target=[0.0, 0.0, 0.35])
         # TODO: look into other camera options (specifically the entity uid and mount)
-
         ratio = 16 / 9
         width = 1024
         height = int(width / ratio)
@@ -214,10 +298,25 @@ class PlaneVel(BaseEnv):
         ) / self.sim_timestep
         self.chassis_lin_vel_prev = chassis_lin_vel
 
+        robot_bbox, step_bbox = self.get_bboxes()
+        collision = (
+            (bbox_distance(robot_bbox, step_bbox) < 0.01)
+            .type(torch.float)
+            .to(device=self.device)
+        )
+
+        # print(f"{self.agent.robot.get_pose().get_p()=}")
+        # print(f"{collision=}")
+
+        # print(f"{chassis_orientation.device=}")
+        # print(f"{collision.device=}")
+
         return dict(
             orientation=chassis_orientation,  # (N, 4)
             angular_velocity=chassis_angular_velocity,  # (N, 3)
             linear_acceleration=chassis_linear_acceleration,  # (N, 3)
+            # TODO: needs to be optional
+            collision=collision,  # (N, 1)
         )
 
     def compute_dense_reward(self, obs, action: torch.Tensor, info: dict):
@@ -231,6 +330,11 @@ class PlaneVel(BaseEnv):
 
         info["velocity"] = self.agent.robot.get_root_linear_velocity().cpu()
         info["extension"] = obs[..., 4:8].sum(dim=-1).cpu()
+
+        robot_bbox, step_bbox = self.get_bboxes()
+        # info["collision"] = check_collision(robot_bbox.bounds, step_bbox.bounds)  # type: ignore
+        # info["collision"] = bbox_distance < 0.01  # type: ignore
+        info["distance"] = bbox_distance(robot_bbox, step_bbox)  # type: ignore
 
         #
         # Reward for moving at the correct velocity
