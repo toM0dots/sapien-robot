@@ -22,9 +22,9 @@ from twsim.robots.transwheel import TransWheel, wheel_radius
 
 
 # TODO: set a reasonable number of max episode steps
-@register_env("PlaneVel-v1", max_episode_steps=200)
-class PlaneVel(BaseEnv):
-    """This is a flat plane environment for debugging purposes.
+@register_env("StepVel-v1", max_episode_steps=200)
+class StepVel(BaseEnv):
+    """This environment includes a step in front of the robot on a flat plane.
 
     This environment does not have a success condition.
     """
@@ -88,6 +88,23 @@ class PlaneVel(BaseEnv):
             floor_length=4,
             texture_square_len=1,
         )
+
+        step_half_size = (3e-2, 3e-1, 2e-2)
+
+        builder = self.scene.create_actor_builder()
+
+        builder.initial_pose = sapien.Pose(p=(0.15, 0, 0.01), q=(1, 0, 0, 0))  # type: ignore
+        builder.add_box_collision(half_size=step_half_size)
+        builder.add_box_visual(half_size=step_half_size, material=(0.4, 0.2, 0.4))
+        self.step_obj = builder.build_static(name="step")
+
+    def _after_reconfigure(self, options):
+        # self.agent_bbox = self.agent.robot.get_first_collision_mesh().bounding_box  # type: ignore
+        self.step_bbox = self.step_obj.get_first_collision_mesh().bounding_box  # type: ignore
+        return super()._after_reconfigure(options)
+
+    def get_bboxes(self):
+        return self.agent.robot.get_collision_meshes(), self.step_bbox  # type: ignore
 
     # @property
     # def _default_sensor_configs(self):
